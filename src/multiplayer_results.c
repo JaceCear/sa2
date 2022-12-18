@@ -19,11 +19,11 @@
 #endif
 
 struct MultiplayerResultsScreen {
-    struct Unk_03002400 unk0;
-    struct Unk_03002400 unk40;
+    Background unk0;
+    Background unk40;
     // TODO: these may be the wrong way around
-    struct UNK_0808B3FC_UNK240 resultRows[MULTI_SIO_PLAYERS_MAX];
-    struct UNK_0808B3FC_UNK240 characterRows[MULTI_SIO_PLAYERS_MAX];
+    Sprite resultRows[MULTI_SIO_PLAYERS_MAX];
+    Sprite characterRows[MULTI_SIO_PLAYERS_MAX];
     u16 animStep;
     u8 numPlayers;
     u8 mode;
@@ -36,7 +36,7 @@ static void sub_805C3D0(void);
 static void sub_805C69C(void);
 static void sub_805C504(void);
 
-static const struct UNK_080E0D64 gUnknown_080D9100[][7] = {
+static const TileInfo gUnknown_080D9100[][7] = {
     [LANG_DEFAULT] = {
         TextElementAlt3(0, 0, 1077),
         TextElementAlt3(1, 0, 1077),
@@ -102,7 +102,7 @@ static const struct UNK_080E0D64 gUnknown_080D9100[][7] = {
     },
 };
 
-static const struct UNK_080E0D64 gUnknown_080D9288[MULTI_SIO_PLAYERS_MAX] = {
+static const TileInfo gUnknown_080D9288[MULTI_SIO_PLAYERS_MAX] = {
     TextElementAlt4(13, 0, 1074),
     TextElementAlt4(14, 0, 1074),
     TextElementAlt4(15, 0, 1074),
@@ -119,9 +119,9 @@ void CreateMultiplayerResultsScreen(u8 mode)
 {
     struct Task *t;
     struct MultiplayerResultsScreen *resultsScreen;
-    struct Unk_03002400 *background;
+    Background *background;
     u32 i;
-    struct UNK_0808B3FC_UNK240 *element;
+    Sprite *element;
 
     u32 count = 0;
     u32 lang = gLoadedSaveGame->unk6;
@@ -198,46 +198,46 @@ void CreateMultiplayerResultsScreen(u8 mode)
         if (GetBit(gMultiplayerConnections, i)) {
             s32 temp;
             element = &resultsScreen->resultRows[i];
-            element->unk16 = 200;
-            element->unk18 = 0x33 + (0x20 * i);
-            element->unk4 = (void *)(OBJ_VRAM0 + (i * 0x800));
+            element->x = 200;
+            element->y = 0x33 + (0x20 * i);
+            element->vram = (void *)(OBJ_VRAM0 + (i * 0x800));
             element->unk1A = 0x400;
             element->unk8 = 0;
             temp = gUnknown_030054B4[i];
             if (temp == 5) {
-                element->unkA = gUnknown_080D9100[lang][1].unk4;
-                element->unk20 = gUnknown_080D9100[lang][1].unk6;
+                element->anim = gUnknown_080D9100[lang][1].anim;
+                element->variant = gUnknown_080D9100[lang][1].variant;
             } else if (temp == 4) {
-                element->unkA = gUnknown_080D9100[lang][2].unk4;
-                element->unk20 = gUnknown_080D9100[lang][2].unk6;
+                element->anim = gUnknown_080D9100[lang][2].anim;
+                element->variant = gUnknown_080D9100[lang][2].variant;
             } else if (count == 2 || gGameMode == 4) {
-                element->unkA = gUnknown_080D9100[lang][0].unk4;
-                element->unk20 = gUnknown_080D9100[lang][0].unk6 + temp;
+                element->anim = gUnknown_080D9100[lang][0].anim;
+                element->variant = gUnknown_080D9100[lang][0].variant + temp;
             } else {
-                element->unkA = gUnknown_080D9100[lang][3].unk4;
-                element->unk20 = gUnknown_080D9100[lang][3].unk6 + temp;
+                element->anim = gUnknown_080D9100[lang][3].anim;
+                element->variant = gUnknown_080D9100[lang][3].variant + temp;
             }
             element->unk14 = 0;
             element->unk1C = 0;
             element->unk21 = 0xFF;
             element->unk22 = 0x10;
-            element->unk25 = 0;
+            element->focused = 0;
             element->unk10 = 0x1000;
             sub_8004558(element);
 
             element = &resultsScreen->characterRows[i];
-            element->unk16 = 0;
-            element->unk18 = 0x1F + (0x20 * i);
-            element->unk4 = (void *)(OBJ_VRAM0 + temp2);
+            element->x = 0;
+            element->y = 0x1F + (0x20 * i);
+            element->vram = (void *)(OBJ_VRAM0 + temp2);
             element->unk1A = 0x400;
             element->unk8 = 0;
-            element->unkA = gUnknown_080D9288[i].unk4;
-            element->unk20 = gUnknown_080D9288[i].unk6;
+            element->anim = gUnknown_080D9288[i].anim;
+            element->variant = gUnknown_080D9288[i].variant;
             element->unk14 = 0;
             element->unk1C = 0;
             element->unk21 = 0xFF;
             element->unk22 = 0x10;
-            element->unk25 = 0;
+            element->focused = 0;
             element->unk10 = 0x1000;
             sub_8004558(element);
         }
@@ -431,7 +431,7 @@ static void sub_805C69C(void)
 {
     u32 i;
     struct MultiplayerResultsScreen *resultsScreen;
-    struct UNK_0808B3FC_UNK240 *item;
+    Sprite *item;
 
     MultiPakHeartbeat();
 

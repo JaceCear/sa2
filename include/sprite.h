@@ -3,9 +3,31 @@
 
 #include "global.h"
 
-// TODO: move the struct declaration to a proper location
-// Background
-struct Unk_03002400 {
+// After a sprite is initialized, its x-value in the layout-data gets set to -2.
+#define SPRITE_STATE_POS_INITIALIZED (-2)
+#define SPRITE_STATE_UNK_MINUS_THREE (-3)
+#define SET_SPRITE_INITIALIZED(target)                                                  \
+    {                                                                                   \
+        s32 negativeTwo;                                                                \
+        s16 forMatching;                                                                \
+        negativeTwo = SPRITE_STATE_POS_INITIALIZED;                                     \
+        forMatching = negativeTwo;                                                      \
+        target->x = forMatching;                                                        \
+    }
+
+typedef u16 AnimId;
+
+// BgHeader
+struct BgHeader {
+    /* TODO: fixing types breaks sub_80021C4. */
+    u32 unk0; // const void *
+    u32 unk4; // void *
+    u16 unk8;
+};
+
+typedef struct {
+    // TODO: BgHeader unk0;
+    // and remove the below 3 values
     u32 unk0;
     u32 unk4; // vram
 
@@ -43,7 +65,7 @@ struct Unk_03002400 {
     const u16 *unk38;
     u16 unk3C;
     u16 unk3E;
-}; /* size = 0x40 */
+} Background; /* size = 0x40 */
 
 struct UNK_0808B3FC_UNK240_UNKC {
     u8 unk0;
@@ -55,61 +77,57 @@ struct UNK_0808B3FC_UNK240_UNKC {
     s16 unkA;
 };
 
+typedef struct {
+    s32 unk0;
+    u8 unk4;
+    u8 unk5;
+    u8 unk6;
+    u8 unk7;
+} Sprite_UNK28;
+
 // TODO: work out what makes this struct different from the above
 // Maybe `struct Sprite`
-struct UNK_0808B3FC_UNK240 {
+typedef struct {
     // These values are part of some other struct
-    u32 unk0;
-    void *unk4; // something vram
+    // Note(Jace): Isn't this a u8* to the tile data in the ROM?
+    /* 0x00 */ u32 unk0;
 
-    u16 unk8;
+    /* 0x04 */ void *vram;
 
-    // assetId
-    u16 unkA;
+    /* 0x08 */ u16 unk8;
 
-    struct UNK_0808B3FC_UNK240_UNKC *unkC;
-    u32 unk10;
+    /* 0x0A */ AnimId anim;
 
-    u16 unk14;
+    /* 0x0C */ struct UNK_0808B3FC_UNK240_UNKC *unkC;
+    /* 0x10 */ u32 unk10; // bitfield
+
+    /* 0x14 */ u16 unk14; // animation cursor
 
     // TODO: should be signed
-    // x
-    u16 unk16;
-    // y
-    u16 unk18;
+    /* 0x16 */ u16 x;
+    /* 0x18 */ u16 y;
 
-    u16 unk1A;
+    /* 0x1A */ u16 unk1A; // might be a bitfield?
 
-    u16 unk1C;
-    u16 unk1E;
+    /* 0x1C */ u16 unk1C;
+    /* 0x1E */ u16 unk1E;
 
-    // variant
-    u8 unk20;
+    /* 0x20 */ u8 variant;
 
-    u8 unk21;
+    /* 0x21 */ u8 unk21;
 
     // something to do with animation speed
-    u8 unk22;
+    /* 0x22 */ u8 unk22;
 
     // TODO: these values are only used within some
     // sort of menu functions. Split out the shared stuff
-    u8 unk23;
-    u8 unk24;
-    // focused
-    u8 unk25;
+    /* 0x23 */ u8 unk23;
+    /* 0x24 */ u8 unk24;
+    /* 0x25 */ u8 focused;
 
-    u8 filler26[2];
-    s32 unk28;
-    u8 filler2C[4];
-} /* size = 0x30 */;
-
-struct Unk_03002EC0 {
-    /* TODO: fixing types breaks sub_80021C4. */
-    u32 unk0; // const void *
-    u32 unk4; // void *
-    u16 unk8;
-    u8 fillerA[2];
-};
+    /* 0x26 */ u8 filler26[2];
+    /* 0x28 */ Sprite_UNK28 unk28[1];
+} Sprite /* size = 0x30 */;
 
 // Transformer
 struct UNK_808D124_UNK180 {
@@ -124,20 +142,17 @@ struct UNK_808D124_UNK180 {
     u8 unkB;
 }; /* size 0xC */
 
-// used for defining element data
-struct UNK_080E0D64 {
-    // width
-    u32 unk0;
-    // caption ID
-    u16 unk4;
-    u8 unk6;
-};
+typedef struct {
+    /* 0x00 */ u32 numTiles;
+    /* 0x04 */ AnimId anim;
+    /* 0x06 */ u8 variant;
+} TileInfo;
 
 // Register menu item
-u32 sub_8004558(struct UNK_0808B3FC_UNK240 *);
+u32 sub_8004558(Sprite *);
 
-void sub_80051E8(struct UNK_0808B3FC_UNK240 *);
-void sub_8002A3C(struct Unk_03002400 *);
+void sub_80051E8(Sprite *);
+void sub_8002A3C(Background *);
 u32 sub_8004010(void);
 u32 sub_80039E4(void);
 u32 sub_8002B20(void);
@@ -145,15 +160,14 @@ void DrawToOamBuffer(void);
 OamData *sub_80058B4(u8 size);
 
 // TransformSprite
-void sub_8004860(struct UNK_0808B3FC_UNK240 *, struct UNK_808D124_UNK180 *);
+void sub_8004860(Sprite *, struct UNK_808D124_UNK180 *);
 
 void sub_8003EE4(u32, u16, u16, u32, u32, u32, u32, struct BgAffineRegs *);
 
-void sub_80036E0(struct UNK_0808B3FC_UNK240 *);
-void sub_8003914(struct UNK_0808B3FC_UNK240 *);
+void sub_80036E0(Sprite *);
+void sub_8003914(Sprite *);
 void sub_80047A0(u16, u16, u16, u16);
 
-// Probably a list of sprites to draw to screen
-extern struct Unk_03002EC0 *gUnknown_030027A0[];
+void sub_8003638(Background *);
 
 #endif

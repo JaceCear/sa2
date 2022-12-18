@@ -10,9 +10,10 @@
 #define ZONE_7     6
 #define ZONE_FINAL 7
 
-#define ACT_1    0
-#define ACT_2    1
-#define ACT_BOSS 2
+#define ACT_1      0
+#define ACT_2      1
+#define ACT_BOSS   2
+#define ACT_UNUSED 3
 
 #define ACT_XX_FINAL_ZONE ACT_1
 #define ACT_TRUE_AREA_53  ACT_2
@@ -22,6 +23,7 @@
 
 #define LEVEL_INDEX(zone, act) ((zone) * (ACTS_PER_ZONE + 1)) + (act)
 
+#define LEVEL_TO_ZONE(level) ((level) >> 2)
 // ((((level) / (ACTS_PER_ZONE + 1)) * 2) | ((level) & 1))
 #define LEVEL_TO_COURSE_INDEX(level)                                                    \
     ((((level) / (ACTS_PER_ZONE + 1)) << 0x19 >> 0x18) | ((level)&1))
@@ -35,7 +37,6 @@
      | CHAOS_EMERALD(ZONE_4) | CHAOS_EMERALD(ZONE_5) | CHAOS_EMERALD(ZONE_6)            \
      | CHAOS_EMERALD(ZONE_7))
 
-// lol?
-#define ALL_CHAOS_EMERALDS (ALL_ZONE_CHAOS_EMERALDS | CHAOS_EMERALD(ZONE_FINAL))
+#define CHAOS_EMERALDS_COMPLETED CHAOS_EMERALD(7)
 
 #endif // GUARD_ZONES_H

@@ -6,14 +6,13 @@
 #include "special_stage_data.h"
 #include "player.h"
 
+#include "constants/animations.h"
+
 void sub_806D788(void);
 void sub_806D2C8(void);
-void sub_806D548(struct UNK_0808B3FC_UNK240 *element, void *, s16, u8,
-                 const struct UNK_80DF670 *);
-void sub_806D7D0(struct UNK_0808B3FC_UNK240 *element, s16, s16,
-                 const struct UNK_80DF670 *);
-void sub_806D830(struct UNK_0808B3FC_UNK240 *element, s16, s16,
-                 const struct UNK_80DF670 *);
+void sub_806D548(Sprite *element, void *, s16, u8, const struct UNK_80DF670 *);
+void sub_806D7D0(Sprite *element, s16, s16, const struct UNK_80DF670 *);
+void sub_806D830(Sprite *element, s16, s16, const struct UNK_80DF670 *);
 
 void sub_806D5CC(void);
 void sub_806D388(void);
@@ -35,8 +34,8 @@ void sub_806D5CC(void);
 void sub_806D740(void);
 
 static const struct UNK_80DF670 gUnknown_080DF668 = {
-    .unk0 = 884,
-    .unk2 = 0,
+    .anim = SA2_ANIM_SP_STAGE_HOLE,
+    .variant = 0,
     .unk4 = 2,
     .unk6 = 16,
     .unk7 = 0,
@@ -66,7 +65,7 @@ struct Task *CreateSpecialStagePlayer(struct SpecialStage *stage)
     s16 result;
     u32 unk5B5C;
     void *ram;
-    u32 temp;
+    u32 variant;
 
     struct Task *t;
     struct SpecialStagePlayer *player;
@@ -97,7 +96,7 @@ struct Task *CreateSpecialStagePlayer(struct SpecialStage *stage)
     player->unkA0 = gUnknown_03005B5C + (TILE_SIZE_4BPP * 2);
 
     // required for match
-    temp = 2;
+    variant = SA2_ANIM_VARIANT_SP_STAGE_ARROW_RED;
 
     gUnknown_03005B5C += 0xC0;
 
@@ -105,24 +104,24 @@ struct Task *CreateSpecialStagePlayer(struct SpecialStage *stage)
     sub_806D548(&player->unk38, player->unk9C, stage->unk5CC, 10, &gUnknown_080DF668);
 
     {
-        struct UNK_0808B3FC_UNK240 *element = &player->roboArrow;
+        Sprite *element = &player->roboArrow;
         u16 *affine = &gOamBuffer[120].all.affineParam;
 
-        element->unk4 = player->unkA0;
+        element->vram = player->unkA0;
         element->unk8 = 0;
-        element->unkA = 0x37A;
+        element->anim = SA2_ANIM_SP_STAGE_ARROW;
         element->unk10 = 0x107E;
-        element->unk16 = 0x78;
-        element->unk18 = 0x50;
+        element->x = (DISPLAY_WIDTH / 2);
+        element->y = (DISPLAY_HEIGHT / 2);
         element->unk1A = 0;
         element->unk1C = 0;
         element->unk1E = -1;
 
-        element->unk20 = temp;
+        element->variant = variant;
         element->unk21 = -1;
         element->unk22 = 0x10;
-        element->unk25 = 0;
-        element->unk28 = -1;
+        element->focused = 0;
+        element->unk28[0].unk0 = -1;
 
         if (stage->paused == FALSE) {
             sub_8004558(element);
@@ -174,7 +173,7 @@ struct Task *CreateSpecialStagePlayer(struct SpecialStage *stage)
 void sub_806D2C8(void)
 {
     PlayerStateHandler stateHandlers[18];
-    struct UNK_0808B3FC_UNK240 *unk8, *unk38;
+    Sprite *unk8, *unk38;
 
     struct SpecialStagePlayer *player = TaskGetStructPtr(gCurTask);
     struct SpecialStage *stage = player->unk0;
@@ -214,7 +213,7 @@ void sub_806D388(void)
     struct SpecialStagePlayer *player = TaskGetStructPtr(gCurTask);
     struct SpecialStage *stage = player->unk0;
     const struct UNK_80DF670 *unkC4;
-    struct UNK_0808B3FC_UNK240 *unk8;
+    Sprite *unk8;
     u32 index = 0;
 
     if (stage->state != 8) {
@@ -243,7 +242,7 @@ void sub_806D424(void)
     struct SpecialStage *stage = player->unk0;
 
     const struct UNK_80DF670 *unkC4;
-    struct UNK_0808B3FC_UNK240 *unk8;
+    Sprite *unk8;
 
     u32 index = 3;
     if (gInput & DPAD_LEFT) {
@@ -264,7 +263,7 @@ void sub_806D484(void)
     struct SpecialStage *stage = player->unk0;
 
     const struct UNK_80DF670 *unkC4;
-    struct UNK_0808B3FC_UNK240 *unk8;
+    Sprite *unk8;
 
     u32 index = 6;
     if (gInput & DPAD_LEFT) {
@@ -285,7 +284,7 @@ void sub_806D4E4(void)
     struct SpecialStage *stage = player->unk0;
 
     const struct UNK_80DF670 *unkC4;
-    struct UNK_0808B3FC_UNK240 *unk8;
+    Sprite *unk8;
 
     u32 index = 9;
     if (gInput & DPAD_LEFT) {
@@ -299,8 +298,7 @@ void sub_806D4E4(void)
     sub_806D7D0(unk8, player->animSpeed >> 1, stage->unk5CC, unkC4);
 }
 
-void sub_806D548(struct UNK_0808B3FC_UNK240 *element, void *vram, s16 a, u8 b,
-                 const struct UNK_80DF670 *c4)
+void sub_806D548(Sprite *element, void *vram, s16 a, u8 b, const struct UNK_80DF670 *c4)
 {
     u32 unk10 = 0x1000;
     if (c4->unk7 & 1) {
@@ -311,20 +309,20 @@ void sub_806D548(struct UNK_0808B3FC_UNK240 *element, void *vram, s16 a, u8 b,
         unk10 |= 0x800;
     }
 
-    element->unk4 = vram;
+    element->vram = vram;
     element->unk8 = 0;
-    element->unkA = c4->unk0;
+    element->anim = c4->anim;
     element->unk10 = unk10;
-    element->unk16 = 0x78;
-    element->unk18 = a;
+    element->x = (DISPLAY_WIDTH / 2);
+    element->y = a;
     element->unk1A = b << 6;
     element->unk1C = 0;
     element->unk1E = 0xffff;
-    element->unk20 = c4->unk2;
+    element->variant = c4->variant;
     element->unk21 = 0xff;
     element->unk22 = c4->unk6;
-    element->unk25 = 0;
-    element->unk28 = -1;
+    element->focused = 0;
+    element->unk28[0].unk0 = -1;
     sub_8004558(element);
 }
 
@@ -398,7 +396,7 @@ void sub_806D788(void)
     }
 }
 
-void sub_806D7D0(struct UNK_0808B3FC_UNK240 *element, s16 animSpeed, s16 b,
+void sub_806D7D0(Sprite *element, s16 animSpeed, s16 spriteY,
                  const struct UNK_80DF670 *anim)
 {
     u32 unk10 = 0x1000;
@@ -409,17 +407,16 @@ void sub_806D7D0(struct UNK_0808B3FC_UNK240 *element, s16 animSpeed, s16 b,
     if (anim->unk7 & 2) {
         unk10 |= 0x800;
     }
-    element->unkA = anim->unk0;
+    element->anim = anim->anim;
     element->unk10 = unk10;
-    element->unk18 = b;
-    element->unk20 = anim->unk2;
+    element->y = spriteY;
+    element->variant = anim->variant;
 
     element->unk22 = animSpeed != -1 ? animSpeed : 0x10;
     sub_8004558(element);
 }
 
-void sub_806D830(struct UNK_0808B3FC_UNK240 *element, s16 a, s16 b,
-                 const struct UNK_80DF670 *anim)
+void sub_806D830(Sprite *element, s16 a, s16 spriteY, const struct UNK_80DF670 *anim)
 {
     u8 unk22;
     u32 unk10 = 0x1100;
@@ -430,10 +427,10 @@ void sub_806D830(struct UNK_0808B3FC_UNK240 *element, s16 a, s16 b,
     if (anim->unk7 & 2) {
         unk10 |= 0x800;
     }
-    element->unkA = anim->unk0;
+    element->anim = anim->anim;
     element->unk10 = unk10;
-    element->unk18 = b;
-    element->unk20 = anim->unk2;
+    element->y = spriteY;
+    element->variant = anim->variant;
 
     element->unk22 = a != -1 ? a : 0x10;
     sub_8004558(element);

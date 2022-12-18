@@ -11,18 +11,20 @@
 #include "multi_sio.h"
 #include "transition.h"
 #include "m4a.h"
-#include "constants/songs.h"
 #include "constants/text.h"
 #include "game.h"
 #include "flags.h"
 #include "character_select.h"
 
+#include "constants/animations.h"
+#include "constants/songs.h"
+
 struct MultiPakConnectScreen {
     struct UNK_802D4CC_UNK270 unk0;
-    struct UNK_0808B3FC_UNK240 unkC;
-    struct UNK_0808B3FC_UNK240 unk3C;
-    struct UNK_0808B3FC_UNK240 unk6C;
-    struct Unk_03002400 unk9C;
+    Sprite unkC;
+    Sprite unk3C;
+    Sprite unk6C;
+    Background unk9C;
     u32 unkDC;
     u8 fillerDC[8];
     u16 unkE8;
@@ -44,14 +46,14 @@ static void sub_805ADAC(void);
 static void sub_805B4C0(void);
 static void sub_805B454(void);
 
-static const struct UNK_080E0D64 gUnknown_080D9050[] = {
-    TextElement(1, LANG_DEFAULT, 0, 90, 1074),
-    TextElement(1, LANG_JAPANESE, 0, 90, 1074),
-    TextElement(1, LANG_ENGLISH, 0, 84, 1079),
-    TextElement(1, LANG_GERMAN, 0, 90, 1080),
-    TextElement(1, LANG_FRENCH, 0, 90, 1081),
-    TextElement(1, LANG_SPANISH, 0, 90, 1082),
-    TextElement(1, LANG_ITALIAN, 0, 45, 1083),
+static const TileInfo gUnknown_080D9050[] = {
+    TextElement(1, LANG_DEFAULT, 0, 90, SA2_ANIM_MP_MSG),
+    TextElement(1, LANG_JAPANESE, 0, 90, SA2_ANIM_MP_MSG),
+    TextElement(1, LANG_ENGLISH, 0, 84, SA2_ANIM_MP_COMM_MSG_EN),
+    TextElement(1, LANG_GERMAN, 0, 90, SA2_ANIM_MP_COMM_MSG_DE),
+    TextElement(1, LANG_FRENCH, 0, 90, SA2_ANIM_MP_COMM_MSG_FR),
+    TextElement(1, LANG_SPANISH, 0, 90, SA2_ANIM_MP_COMM_MSG_ES),
+    TextElement(1, LANG_ITALIAN, 0, 45, SA2_ANIM_MP_COMM_MSG_IT),
 };
 
 void StartMultiPakConnect(void)
@@ -59,9 +61,9 @@ void StartMultiPakConnect(void)
     struct Task *t;
     struct MultiPakConnectScreen *connectScreen;
     struct UNK_802D4CC_UNK270 *unk0;
-    struct UNK_0808B3FC_UNK240 *unkC;
-    struct Unk_03002400 *unk9C;
-    const struct UNK_080E0D64 *unkD64;
+    Sprite *unkC;
+    Background *unk9C;
+    const TileInfo *unkD64;
     void *vramAddr = (void *)OBJ_VRAM0;
     u8 i;
 
@@ -99,54 +101,54 @@ void StartMultiPakConnect(void)
     sub_802D4CC(unk0);
 
     unkC = &connectScreen->unkC;
-    unkC->unk4 = vramAddr;
-    vramAddr += gUnknown_080D9050[gLoadedSaveGame->unk6].unk0 * TILE_SIZE_4BPP;
-    unkC->unkA = gUnknown_080D9050[gLoadedSaveGame->unk6].unk4;
-    unkC->unk20 = gUnknown_080D9050[gLoadedSaveGame->unk6].unk6;
+    unkC->vram = vramAddr;
+    vramAddr += gUnknown_080D9050[gLoadedSaveGame->unk6].numTiles * TILE_SIZE_4BPP;
+    unkC->anim = gUnknown_080D9050[gLoadedSaveGame->unk6].anim;
+    unkC->variant = gUnknown_080D9050[gLoadedSaveGame->unk6].variant;
     unkC->unk21 = 0xFF;
-    unkC->unk16 = 8;
-    unkC->unk18 = 0x18;
+    unkC->x = 8;
+    unkC->y = 24;
     unkC->unk1A = 0x100;
     unkC->unk8 = 0;
     unkC->unk14 = 0;
     unkC->unk1C = 0;
     unkC->unk22 = 0x10;
-    unkC->unk25 = 0;
-    unkC->unk28 = -1;
+    unkC->focused = 0;
+    unkC->unk28[0].unk0 = -1;
     unkC->unk10 = 0x1000;
     sub_8004558(unkC);
 
     unkC = &connectScreen->unk3C;
-    unkC->unk4 = vramAddr;
-    vramAddr += gPressStartTiles[gLoadedSaveGame->unk6].unk0 * TILE_SIZE_4BPP;
-    unkC->unkA = gPressStartTiles[gLoadedSaveGame->unk6].unk4;
-    unkC->unk20 = gPressStartTiles[gLoadedSaveGame->unk6].unk6;
+    unkC->vram = vramAddr;
+    vramAddr += gPressStartTiles[gLoadedSaveGame->unk6].numTiles * TILE_SIZE_4BPP;
+    unkC->anim = gPressStartTiles[gLoadedSaveGame->unk6].anim;
+    unkC->variant = gPressStartTiles[gLoadedSaveGame->unk6].variant;
     unkC->unk21 = 0xFF;
-    unkC->unk16 = 0x78;
-    unkC->unk18 = 0x7A;
+    unkC->x = (DISPLAY_WIDTH / 2);
+    unkC->y = 122;
     unkC->unk1A = 0x100;
     unkC->unk8 = 0;
     unkC->unk14 = 0;
     unkC->unk1C = 0;
     unkC->unk22 = 0x10;
-    unkC->unk25 = 0;
-    unkC->unk28 = -1;
+    unkC->focused = 0;
+    unkC->unk28[0].unk0 = -1;
     unkC->unk10 = 0x1000;
 
     unkC = &connectScreen->unk6C;
-    unkC->unk4 = vramAddr;
-    unkC->unkA = 0x432;
-    unkC->unk20 = 8;
+    unkC->vram = vramAddr;
+    unkC->anim = SA2_ANIM_MP_MSG;
+    unkC->variant = SA2_ANIM_VARIANT_MP_MSG_2;
     unkC->unk21 = 0xFF;
-    unkC->unk16 = 0x78;
-    unkC->unk18 = 0x8C;
+    unkC->x = (DISPLAY_WIDTH / 2);
+    unkC->y = (DISPLAY_HEIGHT * (7. / 8.));
     unkC->unk1A = 0x100;
     unkC->unk8 = 0;
     unkC->unk14 = 0;
     unkC->unk1C = 0;
     unkC->unk22 = 0x10;
-    unkC->unk25 = 0;
-    unkC->unk28 = -1;
+    unkC->focused = 0;
+    unkC->unk28[0].unk0 = -1;
     unkC->unk10 = 0x1000;
 
     // TODO: make macro
@@ -202,7 +204,7 @@ static void sub_805ADAC(void)
     struct MultiPakConnectScreen *connectScreen = TaskGetStructPtr(gCurTask);
     struct MultiSioData_0_0 *send, *recv;
     struct MultiSioData_0_0 *data;
-    struct UNK_0808B3FC_UNK240 *r4p;
+    Sprite *r4p;
 
     sub_802D4CC(&connectScreen->unk0);
 
@@ -396,8 +398,8 @@ static void sub_805ADAC(void)
 
     if (var2 > 1) {
         r4p = &connectScreen->unk6C;
-        r4p->unkA = 0x432;
-        r4p->unk20 = var2 + 6;
+        r4p->anim = SA2_ANIM_MP_MSG;
+        r4p->variant = var2 + SA2_ANIM_VARIANT_MP_MSG_OK;
         r4p->unk21 = 0xFF;
         sub_8004558(r4p);
         sub_80051E8(r4p);
@@ -467,7 +469,7 @@ static void sub_805B454(void)
 static void sub_805B4C0(void)
 {
     struct MultiSioData_0_0 *recv, *data, *send;
-    struct UNK_0808B3FC_UNK240 *r4p;
+    Sprite *r4p;
     s32 i, j;
 
     u8 recv2;
@@ -580,8 +582,8 @@ static void sub_805B4C0(void)
 
         if (count > 1) {
             r4p = &connectScreen->unk6C;
-            r4p->unkA = 0x432;
-            r4p->unk20 = count + 6;
+            r4p->anim = SA2_ANIM_MP_MSG;
+            r4p->variant = count + SA2_ANIM_VARIANT_MP_MSG_OK;
             r4p->unk21 = 0xFF;
             sub_8004558(r4p);
             sub_80051E8(r4p);
@@ -646,7 +648,7 @@ static void sub_805B4C0(void)
 
 UNUSED static void sub_805B98C(struct MultiPakConnectScreen *connectScreen)
 {
-    struct UNK_0808B3FC_UNK240 *unkC = &connectScreen->unkC;
+    Sprite *unkC = &connectScreen->unkC;
     sub_80051E8(unkC);
     unkC++;
     sub_80051E8(unkC);

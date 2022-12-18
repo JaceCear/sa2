@@ -1,12 +1,13 @@
 #ifndef GUARD_GAME_H
 #define GUARD_GAME_H
 
-#define GAME_MODE_SINGLE_PLAYER    0
-#define GAME_MODE_TIME_ATTACK      1
-#define GAME_MODE_BOSS_TIME_ATTACK 2
+#define GAME_MODE_SINGLE_PLAYER      0
+#define GAME_MODE_TIME_ATTACK        1
+#define GAME_MODE_BOSS_TIME_ATTACK   2
+#define NUM_SINGLE_PLAYER_GAME_MODES 3
 
 // May be multiplayer time attack
-#define GAME_MODE_MULTI_PLAYER 3
+#define GAME_MODE_MULTI_PLAYER NUM_SINGLE_PLAYER_GAME_MODES
 #define GAME_MODE_TEAM_PLAY    4
 
 #include "global.h"
@@ -74,47 +75,83 @@ struct UNK_3005A70 {
 };
 
 // Not sure what these are yet
-struct SomeStruct_59E0 {
-    u32 filler0;
-    u32 filler4;
+typedef struct {
+    /* 0x00 */ u32 filler0;
+    /* 0x04 */ u32 filler4;
 
-    // x
-    s32 unk8;
-    // y
-    s32 unkC;
+    /* 0x08 */ s32 x;
+    /* 0x0C */ s32 y;
 
-    u32 filler10;
-    u16 unk14;
-    u8 filler16[10];
-    u32 unk20;
-    u8 unk24;
-    u8 filler24[0x12];
-    u8 unk37;
-    u8 filler38[100 - 0x14 - 0x24 - 8];
-    u16 unk5C;
-    u8 filler5E[6];
-    u16 unk64;
-    u16 unk66;
-    u16 unk68;
-    u16 unk6A;
-    u8 unk6C;
-    u8 unk6D;
-    u8 filler66[30];
-    u32 unk8C;
-    struct UNK_3005A70 *unk90;
-};
+    /* 0x10 */ s16 speedAirX;
+    /* 0x12 */ s16 speedAirY;
+    /* 0x14 */ s16 speedGroundX;
+    /* 0x16 */ u8 unk16;
+    /* 0x17 */ u8 unk17;
+    /* 0x18 */ u8 filler18[8];
+    /* 0x20 */ u32
+        moveState; // set/compare to values in "include/constants/move_states.h"
+    /* 0x24 */ u8 unk24;
+    /* 0x25 */ u8 filler25[0x11];
+    /* 0x36 */ u8 unk36;
+    /* 0x37 */ u8 unk37;
+    /* 0x38 */ u8 unk38; // bitfield, 0x1 determines layer
+    /* 0x39 */ u8 unk39;
+    /* 0x3A */ u8 filler3A[2];
+    /* 0x3C */ void *unk3C; // the object player collides with this frame?
+    /* 0x40 */ u8 filler40[0x1A];
+    /* 0x5A */ u8 unk5A;
+    /* 0x5B */ u8 unk5B;
+    /* 0x5C */ u16 unk5C;
+    /* 0x5E */ u8 filler5E[4];
+    /* 0x62 */ u8 unk62;
+    /* 0x63 */ u8 unk63;
+    /* 0x64 */ u16 unk64;
+    /* 0x66 */ u16 unk66;
+    /* 0x68 */ u16 unk68; // anim?
+    /* 0x6A */ u16 unk6A; // variant?
+    /* 0x6C */ u8 unk6C;
+    /* 0x6D Some player state, cleared after usage
+     *  0x0A = Player cleared the stage (only for Acts, not Bosses?)
+     *  0x0E = Hit an up-spring
+     *  0x17 = Used in Interactable 044
+     * */
+    /* 0x6D */ u8 unk6D;
+    /* 0x6E */ u8 unk6E; // Parameter for 0x6D-state(?)
+    /* 0x6F */ u8 filler6F[29];
+    /* 0x8C */ u32 unk8C;
+    /* 0x90 */ struct UNK_3005A70 *unk90;
+} Player;
 
-extern struct SomeStruct_59E0 gPlayer;
+extern Player gPlayer;
 
-struct SomeStruct_5960 {
-    s32 unk0;
-    s32 unk4;
-    u8 filler[92 - 8];
-    u32 unk5C;
-    u8 filler60[0x20];
+struct Camera {
+    /* 0x00 */ s32 x; // x
+    /* 0x04 */ s32 y; // y
+    /* 0x08 */ u8 filler[92 - 8];
+    /* 0x5C */ u32 unk5C;
+    /* 0x60 */ u8 filler60[0x20];
 }; /* size 0x80 */
 
-extern struct SomeStruct_5960 gUnknown_03005960;
+extern struct Camera gCamera;
+
+#define TILE_WIDTH       8
+#define CAM_REGION_WIDTH 256
+#define SpriteGetScreenPos(spritePos, regionPos)                                        \
+    ((spritePos)*TILE_WIDTH + (regionPos)*CAM_REGION_WIDTH)
+
+#define CAM_BOUND_X ((DISPLAY_WIDTH) + (CAM_REGION_WIDTH))
+#define CAM_BOUND_Y ((DISPLAY_HEIGHT) + ((CAM_REGION_WIDTH) / 2))
+
+// NOTE(Jace): The u16-cast is u32 in SA3(?)
+#define IS_OUT_OF_RANGE(castType, x, y, dim)                                            \
+    (((castType)(x + (dim / 2)) > DISPLAY_WIDTH + dim) || (y + (dim / 2) < 0)           \
+     || (y > DISPLAY_HEIGHT + (dim / 2)))
+
+// @NOTE/INVESTIGATE: Some places match with u16, some with u32,
+// but u16 is more common, so it's the default.
+#define IS_OUT_OF_CAM_RANGE(x, y) IS_OUT_OF_RANGE(u16, x, y, CAM_REGION_WIDTH)
+#define IS_OUT_OF_CAM_RANGE_TYPED(castType, x, y)                                       \
+    IS_OUT_OF_RANGE(castType, x, y, CAM_REGION_WIDTH)
 
 struct SomeStruct_5660 {
     u8 filler[16];
@@ -172,5 +209,7 @@ void CreateTrueArea53(void);
 
 // Sweep anim
 void sub_802E044(u16, u16);
+
+void sub_80304DC(u32, u16, u8);
 
 #endif // GUARD_GAME_H

@@ -7,9 +7,12 @@
 #include "random.h"
 #include "trig.h"
 
+#include "constants/animations.h"
+#include "constants/move_states.h"
+
 struct BoostModeParticles {
-    struct UNK_0808B3FC_UNK240 unk0;
-    struct UNK_0808B3FC_UNK240 unk30;
+    Sprite unk0;
+    Sprite unk30;
     u16 unk60;
     s16 unk62[16][2];
     s16 unkA2[16][2];
@@ -26,40 +29,40 @@ void CreateBoostModeParticles(void)
     s32 i;
     struct Task *t = TaskCreate(sub_8089E54, 0xE8, 0x5050, 0, sub_808A234);
     struct BoostModeParticles *particles = TaskGetStructPtr(t);
-    struct UNK_0808B3FC_UNK240 *element = &particles->unk0;
+    Sprite *element = &particles->unk0;
 
     particles->unk60 = 0;
-    element->unk4 = VramMalloc(1);
-    element->unkA = 0x369;
-    element->unk20 = 0;
+    element->vram = VramMalloc(1);
+    element->anim = SA2_ANIM_BOOST_EFFECT;
+    element->variant = 0;
     element->unk8 = 0;
     element->unk21 = 0xFF;
     element->unk1A = 0x200;
     element->unk10 = 0x2000;
     element->unk1C = 0;
     element->unk22 = 0x10;
-    element->unk25 = 0;
+    element->focused = 0;
     sub_8004558(element);
 
     element = &particles->unk30;
-    element->unk4 = VramMalloc(1);
-    element->unkA = 0x369;
-    element->unk20 = 1;
+    element->vram = VramMalloc(1);
+    element->anim = SA2_ANIM_BOOST_EFFECT;
+    element->variant = 1;
     element->unk8 = 0;
     element->unk21 = 0xFF;
     element->unk1A = 0x200;
     element->unk10 = 0x2000;
     element->unk1C = 0;
     element->unk22 = 0x10;
-    element->unk25 = 0;
+    element->focused = 0;
 
-    SeedRng(gPlayer.unk8, gUnknown_03005960.unk0);
+    SeedRng(gPlayer.x, gCamera.x);
 
     for (i = 0; i < 16; i++) {
         u8 temp1;
         s32 rand, var;
         particles->unk62[i][1] = (Random() & 0x7FF) + 0x1000;
-        if (gPlayer.unk20 & 1) {
+        if (gPlayer.moveState & MOVESTATE_FACING_LEFT) {
 #ifndef NON_MATCHING
             u32 z = (u32)gPlayer.unk24 << 0x18;
             temp1 = (z + 0xC0000000) >> 0x18;
@@ -110,7 +113,7 @@ void sub_8089E54(void)
 {
     s32 i;
     struct BoostModeParticles *particles = TaskGetStructPtr(gCurTask);
-    struct UNK_0808B3FC_UNK240 *element;
+    Sprite *element;
     sub_8004558(&particles->unk0);
 
     for (i = 0; i < 8; i++) {
@@ -125,23 +128,21 @@ void sub_8089E54(void)
         particles->unkA2[i][0] = (particles->unkA2[i][0] * 200) >> 8;
         particles->unkA2[i][1] = (particles->unkA2[i][1] * 200) >> 8;
         element = &particles->unk0;
-        element->unk16 = (gPlayer.unk8 >> 8) - gUnknown_03005960.unk0
-            + (particles->unk62[i][0] >> 8);
-        element->unk18 = (gPlayer.unkC >> 8) - gUnknown_03005960.unk4
-            + (particles->unk62[i][1] >> 8);
+        element->x = (gPlayer.x >> 8) - gCamera.x + (particles->unk62[i][0] >> 8);
+        element->y = (gPlayer.y >> 8) - gCamera.y + (particles->unk62[i][1] >> 8);
         sub_80051E8(element);
     }
 
     if (particles->unk60++ > 8) {
-        element->unk20 = 1;
-        SeedRng(gPlayer.unk8, gUnknown_03005960.unk0);
+        element->variant = 1;
+        SeedRng(gPlayer.x, gCamera.x);
 
         for (i = 0; i < 16; i++) {
             u8 temp;
             s16 rand;
             particles->unkE2 = 0x80;
             particles->unkE4 = 0;
-            if (gPlayer.unk20 & 1) {
+            if (gPlayer.moveState & MOVESTATE_FACING_LEFT) {
                 temp = Random();
                 temp += 64;
                 particles->unkE2
@@ -169,7 +170,7 @@ void sub_808A0A4(void)
 {
     s32 i;
     struct BoostModeParticles *particles = TaskGetStructPtr(gCurTask);
-    struct UNK_0808B3FC_UNK240 *element = &particles->unk0;
+    Sprite *element = &particles->unk0;
 
     if (particles->unk60++ > 0x18) {
         TaskDestroy(gCurTask);
@@ -193,17 +194,15 @@ void sub_808A0A4(void)
     for (i = 0; i < 8; i++) {
         element = &particles->unk0;
         if (particles->unk60 & 1) {
-            element->unk16 = ((gPlayer.unk8 >> 8) - gUnknown_03005960.unk0)
-                + (particles->unk62[i][0] >> 8);
-            element->unk18 = ((gPlayer.unkC >> 8) - gUnknown_03005960.unk4)
-                + (particles->unk62[i][1] >> 8);
+            element->x = ((gPlayer.x >> 8) - gCamera.x) + (particles->unk62[i][0] >> 8);
+            element->y = ((gPlayer.y >> 8) - gCamera.y) + (particles->unk62[i][1] >> 8);
             sub_8004558(element);
 
         } else {
-            element->unk16 = ((gPlayer.unk8 >> 8) - gUnknown_03005960.unk0)
-                + (particles->unk62[i + 8][0] >> 8);
-            element->unk18 = ((gPlayer.unkC >> 8) - gUnknown_03005960.unk4)
-                + (particles->unk62[i + 8][1] >> 8);
+            element->x
+                = ((gPlayer.x >> 8) - gCamera.x) + (particles->unk62[i + 8][0] >> 8);
+            element->y
+                = ((gPlayer.y >> 8) - gCamera.y) + (particles->unk62[i + 8][1] >> 8);
         }
         sub_80051E8(element);
     }
@@ -212,8 +211,8 @@ void sub_808A0A4(void)
 void sub_808A234(struct Task *t)
 {
     struct BoostModeParticles *particles = TaskGetStructPtr(t);
-    struct UNK_0808B3FC_UNK240 *element = &particles->unk0;
-    VramFree(element->unk4);
+    Sprite *element = &particles->unk0;
+    VramFree(element->vram);
     element++;
-    VramFree(element->unk4);
+    VramFree(element->vram);
 }

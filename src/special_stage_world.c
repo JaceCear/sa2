@@ -179,21 +179,21 @@ void sub_806E94C(struct SpecialStageWorld *world)
     s16 num = gUnknown_080DF6DC[*zone];
 
     for (i = 0; i < num; i++) {
-        struct UNK_0808B3FC_UNK240 *element = &world->unk90[i];
-        element->unk4 = gUnknown_03005B5C;
+        Sprite *element = &world->unk90[i];
+        element->vram = gUnknown_03005B5C;
         element->unk8 = 0;
-        element->unkA = assets[i].unk0;
+        element->anim = assets[i].anim;
         element->unk10 = 0x80000;
-        element->unk16 = 0;
-        element->unk18 = 0;
+        element->x = 0;
+        element->y = 0;
         element->unk1A = 0;
         element->unk1C = 0;
         element->unk1E = 0xffff;
-        element->unk20 = assets[i].unk2;
+        element->variant = assets[i].variant;
         element->unk21 = 0xff;
         element->unk22 = 16;
-        element->unk25 = 0;
-        element->unk28 = -1;
+        element->focused = 0;
+        element->unk28[0].unk0 = -1;
         sub_80036E0(element);
     }
 }
@@ -265,7 +265,7 @@ void sub_806EB74(void)
 
     if (stage->paused != TRUE) {
         for (i = 0; i < num; i++) {
-            struct UNK_0808B3FC_UNK240 *element = &world->unk90[i];
+            Sprite *element = &world->unk90[i];
 
             sub_80036E0(element);
             sub_8003914(element);

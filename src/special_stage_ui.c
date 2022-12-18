@@ -100,7 +100,7 @@ static void CreateStageTime(struct SpecialStageUI *ui)
 {
     struct SpecialStage *stage = ui->stage;
     const struct UNK_80DF670 *unkF7E8;
-    struct UNK_0808B3FC_UNK240 newElement;
+    Sprite newElement;
 
     s16 timeHundreds = stage->timeHundreds;
     s16 timeTens = stage->timeTens;
@@ -110,16 +110,16 @@ static void CreateStageTime(struct SpecialStageUI *ui)
                 0);
 
     unkF7E8 = &sDigitSprites[timeHundreds];
-    sub_806CA88(&ui->timeHundreds, RENDER_TARGET_SCREEN, unkF7E8->unk4, unkF7E8->unk0,
-                0x1000, 0xCC, 0x12, 1, unkF7E8->unk2, 0);
+    sub_806CA88(&ui->timeHundreds, RENDER_TARGET_SCREEN, unkF7E8->unk4, unkF7E8->anim,
+                0x1000, 0xCC, 0x12, 1, unkF7E8->variant, 0);
 
     unkF7E8 = &sDigitSprites[timeTens];
-    sub_806CA88(&ui->timeTens, RENDER_TARGET_SCREEN, unkF7E8->unk4, unkF7E8->unk0,
-                0x1000, 0xD4, 0x12, 1, unkF7E8->unk2, 0);
+    sub_806CA88(&ui->timeTens, RENDER_TARGET_SCREEN, unkF7E8->unk4, unkF7E8->anim,
+                0x1000, 0xD4, 0x12, 1, unkF7E8->variant, 0);
 
     unkF7E8 = &sDigitSprites[timeUnits];
-    sub_806CA88(&ui->timeUnits, RENDER_TARGET_SCREEN, unkF7E8->unk4, unkF7E8->unk0,
-                0x1000, 0xDC, 0x12, 1, unkF7E8->unk2, 0);
+    sub_806CA88(&ui->timeUnits, RENDER_TARGET_SCREEN, unkF7E8->unk4, unkF7E8->anim,
+                0x1000, 0xDC, 0x12, 1, unkF7E8->variant, 0);
 
     sub_806CA88(&newElement, RENDER_TARGET_SCREEN, 0, 0x379, 0, 0, 0, 0, 0, 0);
 }
@@ -129,7 +129,7 @@ void sub_806FCF8(void)
     struct SpecialStageUI *ui = TaskGetStructPtr(gCurTask);
     struct SpecialStage *stage = ui->stage;
 
-    struct UNK_0808B3FC_UNK240 *element;
+    Sprite *element;
     const struct UNK_80DF670 *unkF7E8;
 
     u32 temp;
@@ -158,29 +158,29 @@ void sub_806FCF8(void)
     if (timeHundreds != 0) {
         unkF7E8 = &sDigitSprites[timeHundreds];
         element = &ui->timeHundreds;
-        element->unkA = unkF7E8->unk0;
-        element->unk20 = unkF7E8->unk2;
+        element->anim = unkF7E8->anim;
+        element->variant = unkF7E8->variant;
         element->unk10 |= 0x40000;
-        element->unk25 = temp;
+        element->focused = temp;
         sub_8004558(element);
     }
 
     if ((timeHundreds | timeTens) != 0) {
         unkF7E8 = &sDigitSprites[timeTens];
         element = &ui->timeTens;
-        element->unkA = unkF7E8->unk0;
-        element->unk20 = unkF7E8->unk2;
+        element->anim = unkF7E8->anim;
+        element->variant = unkF7E8->variant;
         element->unk10 |= 0x40000;
-        element->unk25 = temp;
+        element->focused = temp;
         sub_8004558(element);
     }
 
     unkF7E8 = &sDigitSprites[timeUnits];
     element = &ui->timeUnits;
-    element->unkA = unkF7E8->unk0;
-    element->unk20 = unkF7E8->unk2;
+    element->anim = unkF7E8->anim;
+    element->variant = unkF7E8->variant;
     element->unk10 |= 0x40000;
-    element->unk25 = temp;
+    element->focused = temp;
     sub_8004558(element);
 }
 
@@ -188,34 +188,34 @@ static void CreateRingCounter(struct SpecialStageUI *ui)
 {
     struct SpecialStage *stage = ui->stage;
 
-    struct UNK_0808B3FC_UNK240 *element;
+    Sprite *element;
     const struct UNK_80DF670 *sprite;
 
     sprite = &sDigitSprites[stage->ringsHundreds];
     sub_806CA88(&ui->ringsHundredsDigit, RENDER_TARGET_SCREEN, sprite->unk4,
-                sprite->unk0, 0x1000, 100, 0x10, 1, sprite->unk2, 0);
+                sprite->anim, 0x1000, 100, 0x10, 1, sprite->variant, 0);
 
     sprite = &sDigitSprites[stage->ringsTens];
-    sub_806CA88(&ui->ringsTensDigit, RENDER_TARGET_SCREEN, sprite->unk4, sprite->unk0,
-                0x1000, 0x6C, 0x10, 1, sprite->unk2, 0);
+    sub_806CA88(&ui->ringsTensDigit, RENDER_TARGET_SCREEN, sprite->unk4, sprite->anim,
+                0x1000, 0x6C, 0x10, 1, sprite->variant, 0);
 
     sprite = &sDigitSprites[stage->ringsUnits];
-    sub_806CA88(&ui->ringsUnitsDigit, RENDER_TARGET_SCREEN, sprite->unk4, sprite->unk0,
-                0x1000, 0x74, 0x10, 1, sprite->unk2, 0);
+    sub_806CA88(&ui->ringsUnitsDigit, RENDER_TARGET_SCREEN, sprite->unk4, sprite->anim,
+                0x1000, 0x74, 0x10, 1, sprite->variant, 0);
 
     sub_806CA88(&ui->unk154, RENDER_TARGET_SCREEN, 8, 0x378, 0x1000, 0x78, 0xE, 2, 0, 0);
 
     sprite = &sDigitSprites[stage->ringsTargetHundreds];
     sub_806CA88(&ui->ringsTargetHundredsDigit, RENDER_TARGET_SCREEN, sprite->unk4,
-                sprite->unk0, 0x1000, 0x7C, 0x18, 1, sprite->unk2, 0);
+                sprite->anim, 0x1000, 0x7C, 0x18, 1, sprite->variant, 0);
 
     sprite = &sDigitSprites[stage->ringsTargetTens];
     sub_806CA88(&ui->ringsTargetTensDigit, RENDER_TARGET_SCREEN, sprite->unk4,
-                sprite->unk0, 0x1000, 0x84, 0x18, 1, sprite->unk2, 0);
+                sprite->anim, 0x1000, 0x84, 0x18, 1, sprite->variant, 0);
 
     sprite = &sDigitSprites[stage->ringsTargetUnits];
     sub_806CA88(&ui->ringsTargetUnitsDigit, RENDER_TARGET_SCREEN, sprite->unk4,
-                sprite->unk0, 0x1000, 0x8C, 0x18, 1, sprite->unk2, 0);
+                sprite->anim, 0x1000, 0x8C, 0x18, 1, sprite->variant, 0);
 }
 
 void sub_8070078(void);
@@ -256,25 +256,25 @@ void sub_8070078(void)
     struct SpecialStageUI *ui = TaskGetStructPtr(gCurTask);
     struct SpecialStage *stage = ui->stage;
 
-    struct UNK_0808B3FC_UNK240 *element;
+    Sprite *element;
     const struct UNK_80DF670 *sprite;
 
     sprite = &sDigitSprites[stage->ringsHundreds];
     element = &ui->ringsHundredsDigit;
-    element->unkA = sprite->unk0;
-    element->unk20 = sprite->unk2;
+    element->anim = sprite->anim;
+    element->variant = sprite->variant;
     sub_8004558(element);
 
     sprite = &sDigitSprites[stage->ringsTens];
     element = &ui->ringsTensDigit;
-    element->unkA = sprite->unk0;
-    element->unk20 = sprite->unk2;
+    element->anim = sprite->anim;
+    element->variant = sprite->variant;
     sub_8004558(element);
 
     sprite = &sDigitSprites[stage->ringsUnits];
     element = &ui->ringsUnitsDigit;
-    element->unkA = sprite->unk0;
-    element->unk20 = sprite->unk2;
+    element->anim = sprite->anim;
+    element->variant = sprite->variant;
     sub_8004558(element);
 
     if (stage->targetReached == FALSE) {
@@ -285,8 +285,8 @@ void sub_8070078(void)
             stage->unk5C8 = 0x78;
 
             element = &ui->unk154;
-            element->unkA = 0x378;
-            element->unk20 = 1;
+            element->anim = 0x378;
+            element->variant = 1;
             sub_8004558(element);
         }
         return;
@@ -296,8 +296,8 @@ void sub_8070078(void)
         stage->targetReached = FALSE;
 
         element = &ui->unk154;
-        element->unkA = 0x378;
-        element->unk20 = 0;
+        element->anim = 0x378;
+        element->variant = 0;
         sub_8004558(element);
     } else {
         element = &ui->unk154;
@@ -307,7 +307,7 @@ void sub_8070078(void)
 
 static void HandlePaused(struct SpecialStageUI *ui)
 {
-    struct UNK_0808B3FC_UNK240 *element = &ui->pauseMenu;
+    Sprite *element = &ui->pauseMenu;
     s16 lang = LanguageIndex(gLoadedSaveGame->unk6);
 
     const u16 pauseMenuSprites[6][3];
@@ -343,8 +343,8 @@ SpecialStageResultsScreenCreateUI(struct SpecialStageResultsScreen *resultsScree
     if (stage->targetReached) {
         sub_806CA88(&resultsScreen->unk4, 1, 0x28, 0x37d, 0, 0x100 + a, 0x20, 0, 1, 0);
         sub_806CA88(&resultsScreen->unk34, 1, gUnknown_080DF880[character].unk4,
-                    gUnknown_080DF880[character].unk0, 0, 0x100 + a, 0x18, 0,
-                    gUnknown_080DF880[character].unk2, 0);
+                    gUnknown_080DF880[character].anim, 0, 0x100 + a, 0x18, 0,
+                    gUnknown_080DF880[character].variant, 0);
     } else {
         sub_806CA88(&resultsScreen->unk4, 1, 0x20, 0x37d, 0, 0x100 + a, 0x20, 0, 0, 0);
     }
@@ -355,20 +355,20 @@ SpecialStageResultsScreenCreateUI(struct SpecialStageResultsScreen *resultsScree
 
     for (i = 0; i < 5; i++) {
         sub_806CA88(&resultsScreen->unk244[i], 1, sDigitSprites[0].unk4,
-                    sDigitSprites[0].unk0, 0, d + SomeMacro807028C(i), 0x58, 0,
-                    sDigitSprites[0].unk2, 0);
+                    sDigitSprites[0].anim, 0, d + SomeMacro807028C(i), 0x58, 0,
+                    sDigitSprites[0].variant, 0);
     }
 
     for (i = 0; i < 5; i++) {
         sub_806CA88(&resultsScreen->unk334[i], 1, sDigitSprites[0].unk4,
-                    sDigitSprites[0].unk0, 0, e + SomeMacro807028C(i), 0x6C, 0,
-                    sDigitSprites[0].unk2, 0);
+                    sDigitSprites[0].anim, 0, e + SomeMacro807028C(i), 0x6C, 0,
+                    sDigitSprites[0].variant, 0);
     }
 
     for (i = 0; i < 5; i++) {
         sub_806CA88(&resultsScreen->unk424[i], 1, sDigitSprites[0].unk4,
-                    sDigitSprites[0].unk0, 0, f + SomeMacro807028C(i), 0x80, 0,
-                    sDigitSprites[0].unk2, 0);
+                    sDigitSprites[0].anim, 0, f + SomeMacro807028C(i), 0x80, 0,
+                    sDigitSprites[0].variant, 0);
     }
 
     for (i = 0; i < NUM_COURSE_ZONES; i++) {
@@ -378,8 +378,8 @@ SpecialStageResultsScreenCreateUI(struct SpecialStageResultsScreen *resultsScree
             sprite = &sChaosEmeraldMissingSprites[0];
         }
 
-        sub_806CA88(&resultsScreen->chaosEmerald[i], 1, 9, sprite->unk0, 0, i * 24 + 292,
-                    0x34, 0, sprite->unk2, 0);
+        sub_806CA88(&resultsScreen->chaosEmerald[i], 1, 9, sprite->anim, 0, i * 24 + 292,
+                    0x34, 0, sprite->variant, 0);
     }
 
     resultsScreen->animFrame = 0;
@@ -437,18 +437,18 @@ void sub_807061C(s16 a)
 {
     struct SpecialStageResultsScreen *resultsScreen = TaskGetStructPtr(gCurTask);
     struct SpecialStage *stage = resultsScreen->stage;
-    struct UNK_0808B3FC_UNK240 *element;
+    Sprite *element;
 
     resultsScreen->unk516 = (0xB - a) * 0x16;
 
     element = &resultsScreen->unk4;
 
     if (stage->targetReached) {
-        element->unk16 = resultsScreen->unk516 + 0x4C;
+        element->x = resultsScreen->unk516 + 0x4C;
         element = &resultsScreen->unk34;
-        element->unk16 = resultsScreen->unk516 + 4;
+        element->x = resultsScreen->unk516 + 4;
     } else {
-        element->unk16 = resultsScreen->unk516 + 0x30;
+        element->x = resultsScreen->unk516 + 0x30;
     }
 }
 
@@ -461,11 +461,11 @@ void sub_8070680(s16 a)
     resultsScreen->unk518 = (0xB - a) * 0x16;
 
     for (i = 0; i < 7; i++) {
-        struct UNK_0808B3FC_UNK240 *element = &resultsScreen->chaosEmerald[i];
+        Sprite *element = &resultsScreen->chaosEmerald[i];
         s32 temp2 = (i * 0x18);
         s32 temp = resultsScreen->unk518 + 0x24;
         temp2 += temp;
-        element->unk16 = temp2;
+        element->x = temp2;
     }
 }
 
@@ -473,13 +473,13 @@ void sub_80706D8(s16 a)
 {
     s16 i;
 
-    struct UNK_0808B3FC_UNK240 *element;
+    Sprite *element;
     struct SpecialStageResultsScreen *resultsScreen = TaskGetStructPtr(gCurTask);
     struct SpecialStage *stage = resultsScreen->stage;
 
     resultsScreen->unk51A = (0xB - a) * 0x16;
     element = &resultsScreen->unk1B4;
-    element->unk16 = resultsScreen->unk51A + 0x30;
+    element->x = resultsScreen->unk51A + 0x30;
 
     for (i = 0; i < 5; i++) {
         s32 temp2, temp;
@@ -487,7 +487,7 @@ void sub_80706D8(s16 a)
         element = &resultsScreen->unk244[i];
         temp2 = (i * 8);
         temp = resultsScreen->unk51A + 0x9E;
-        element->unk16 = temp2 + temp;
+        element->x = temp2 + temp;
     }
 }
 
@@ -495,19 +495,19 @@ void sub_8070740(s16 a)
 {
     s16 i;
     s32 temp2, temp;
-    struct UNK_0808B3FC_UNK240 *element;
+    Sprite *element;
     struct SpecialStageResultsScreen *resultsScreen = TaskGetStructPtr(gCurTask);
     struct SpecialStage *stage = resultsScreen->stage;
 
     resultsScreen->unk51C = (0xB - a) * 0x16;
     element = &resultsScreen->unk1E4;
-    element->unk16 = resultsScreen->unk51C + 0x30;
+    element->x = resultsScreen->unk51C + 0x30;
 
     for (i = 0; i < 5; i++) {
         element = &resultsScreen->unk334[i];
         temp2 = (i * 8);
         temp = resultsScreen->unk51C + 0x9E;
-        element->unk16 = temp2 + temp;
+        element->x = temp2 + temp;
     }
 }
 
@@ -515,19 +515,19 @@ void sub_80707A8(s16 xPos)
 {
     s16 i;
     s32 temp2, temp;
-    struct UNK_0808B3FC_UNK240 *element;
+    Sprite *element;
     struct SpecialStageResultsScreen *resultsScreen = TaskGetStructPtr(gCurTask);
     struct SpecialStage *stage = resultsScreen->stage;
 
     resultsScreen->unk51E = (0xB - xPos) * 0x16;
     element = &resultsScreen->unk214;
-    element->unk16 = resultsScreen->unk51E + 0x30;
+    element->x = resultsScreen->unk51E + 0x30;
 
     for (i = 0; i < 5; i++) {
         element = &resultsScreen->unk424[i];
         temp2 = (i * 8);
         temp = resultsScreen->unk51E + 0x9E;
-        element->unk16 = temp2 + temp;
+        element->x = temp2 + temp;
     }
 }
 
@@ -543,16 +543,16 @@ void Task_ResultsScreenNewEmeraldSequencePart1(void)
 
     if (resultsScreen->animFrame > 11) {
         s16 emeraldIndex = zone;
-        struct UNK_0808B3FC_UNK240 *element = &resultsScreen->chaosEmerald[emeraldIndex];
-        element->unkA = sChaosEmeraldUnlockedSprites[emeraldIndex].unk0;
-        element->unk20 = sChaosEmeraldUnlockedSprites[emeraldIndex].unk2;
+        Sprite *element = &resultsScreen->chaosEmerald[emeraldIndex];
+        element->anim = sChaosEmeraldUnlockedSprites[emeraldIndex].anim;
+        element->variant = sChaosEmeraldUnlockedSprites[emeraldIndex].variant;
         gCurTask->main = Task_ResultsScreenNewEmeraldSequencePart2;
     }
 }
 
 static void RenderScoresAnim(void)
 {
-    struct UNK_0808B3FC_UNK240 *element;
+    Sprite *element;
 
     struct SpecialStageResultsScreen *resultsScreen = TaskGetStructPtr(gCurTask);
     struct SpecialStage *stage = resultsScreen->stage;
@@ -614,8 +614,8 @@ static void RenderScoresAnim(void)
         if (found || a[i] != 0 || i == 4) {
             found = TRUE;
             element = &resultsScreen->unk244[i];
-            element->unkA = sDigitSprites[a[i]].unk0;
-            element->unk20 = sDigitSprites[a[i]].unk2;
+            element->anim = sDigitSprites[a[i]].anim;
+            element->variant = sDigitSprites[a[i]].variant;
             sub_8004558(element);
             sub_80051E8(element);
         }
@@ -625,8 +625,8 @@ static void RenderScoresAnim(void)
         if (found || b[i] != 0 || i == 4) {
             found = TRUE;
             element = &resultsScreen->unk334[i];
-            element->unkA = sDigitSprites[b[i]].unk0;
-            element->unk20 = sDigitSprites[b[i]].unk2;
+            element->anim = sDigitSprites[b[i]].anim;
+            element->variant = sDigitSprites[b[i]].variant;
             sub_8004558(element);
             sub_80051E8(element);
         }
@@ -636,8 +636,8 @@ static void RenderScoresAnim(void)
         if (found || c[i] != 0 || i == 4) {
             found = TRUE;
             element = &resultsScreen->unk424[i];
-            element->unkA = sDigitSprites[c[i]].unk0;
-            element->unk20 = sDigitSprites[c[i]].unk2;
+            element->anim = sDigitSprites[c[i]].anim;
+            element->variant = sDigitSprites[c[i]].variant;
             sub_8004558(element);
             sub_80051E8(element);
         }
@@ -725,8 +725,8 @@ void sub_8070C58(void)
 static void CreateMultiplierValue(struct SpecialStageUI *ui)
 {
     const struct UNK_80DF670 *unkF840 = &gUnknown_080DF840[0];
-    sub_806CA88(&ui->multiplier, 0, unkF840->unk4, unkF840->unk0, 0x1000, 0x70, 100, 2,
-                unkF840->unk2, 0);
+    sub_806CA88(&ui->multiplier, 0, unkF840->unk4, unkF840->anim, 0x1000, 0x70, 100, 2,
+                unkF840->variant, 0);
 }
 
 void sub_8070D14(void)
@@ -738,10 +738,10 @@ void sub_8070D14(void)
 
     if (unkC0 > 1) {
         const struct UNK_80DF670 *unkF830 = &gUnknown_080DF830[unkC0];
-        struct UNK_0808B3FC_UNK240 *element = &ui->multiplier;
+        Sprite *element = &ui->multiplier;
         if (stage->paused == FALSE) {
-            element->unkA = unkF830->unk0;
-            element->unk20 = unkF830->unk2;
+            element->anim = unkF830->anim;
+            element->variant = unkF830->variant;
             sub_8004558(element);
         }
         sub_80051E8(element);
@@ -750,7 +750,7 @@ void sub_8070D14(void)
 
 void sub_8070D80(struct SpecialStageUI *ui)
 {
-    struct UNK_0808B3FC_UNK240 *element = &ui->unk244;
+    Sprite *element = &ui->unk244;
     ui->unk2A8 = 1;
     ui->unk2A4 = gUnknown_03005B5C;
     sub_806CA88(element, 0, 0x14, 0x376, 0x1000, 0x78, 0x50, 1, 0, 0);
@@ -767,7 +767,7 @@ void sub_8070DE0(struct SpecialStageUI *ui)
 
 static void RenderPauseMenu(struct SpecialStageUI *ui)
 {
-    struct UNK_0808B3FC_UNK240 *element = &ui->pauseMenu;
+    Sprite *element = &ui->pauseMenu;
     struct SpecialStage *stage = ui->stage;
     void *a, *b;
 
@@ -795,10 +795,10 @@ static void Task_ResultsScreenStartNewEmeraldSequence(void)
 {
     struct SpecialStageResultsScreen *resultsScreen = TaskGetStructPtr(gCurTask);
     struct SpecialStage *stage = resultsScreen->stage;
-    struct UNK_0808B3FC_UNK240 *element = &resultsScreen->chaosEmerald[stage->zone];
+    Sprite *element = &resultsScreen->chaosEmerald[stage->zone];
 
-    element->unkA = sChaosEmeraldUnlockedSprites[8].unk0;
-    element->unk20 = sChaosEmeraldUnlockedSprites[8].unk2;
+    element->anim = sChaosEmeraldUnlockedSprites[8].anim;
+    element->variant = sChaosEmeraldUnlockedSprites[8].variant;
     RenderScoresAnim();
     resultsScreen->animFrame = 0;
     gCurTask->main = Task_ResultsScreenNewEmeraldSequencePart1;
