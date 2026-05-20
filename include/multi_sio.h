@@ -12,10 +12,12 @@
 
 #define MULTI_SIO_SYNC_DATA 0xfefe // Synchronized Data (0x0000/0xfffa~0xffff prohibited)
 
+#if PLATFORM_GBA
 // Comment out if no space in CPU internal Work RAM
 #define MULTI_SIO_DI_FUNC_FAST // SIO Interrupt Prohibit Function High
                                // Speed Flag (CPU Internal RAM
                                // Execution)
+#endif
 
 // Update if maximum delay for communication interrupt is larger than
 // following.
@@ -60,12 +62,11 @@
 
 // Timer count number is calculated from communication data block
 // size.
-#define MULTI_SIO_TIMER_COUNT_TMP                                                       \
-    (SYSTEM_CLOCK / 60 / ((2 + 4 + MULTI_SIO_BLOCK_SIZE + 6) / (16 / 8)))
+#define MULTI_SIO_TIMER_COUNT_TMP (SYSTEM_CLOCK / 60 / ((2 + 4 + MULTI_SIO_BLOCK_SIZE + 6) / (16 / 8)))
 // Timer Count Temporary Value
-#define MULTI_SIO_TIMER_COUNT_MIN                                                       \
-    (MULTI_SIO_1P_SEND_CLOCKS * MULTI_SIO_PLAYERS_MAX + MULTI_SIO_START_BIT_WAIT        \
-     + MULTI_SIO_INTR_MARGIN + MULTI_SIO_INTR_DELAY_MAX + MULTI_SIO_INTR_CLOCK_MAX)
+#define MULTI_SIO_TIMER_COUNT_MIN                                                                                                          \
+    (MULTI_SIO_1P_SEND_CLOCKS * MULTI_SIO_PLAYERS_MAX + MULTI_SIO_START_BIT_WAIT + MULTI_SIO_INTR_MARGIN + MULTI_SIO_INTR_DELAY_MAX        \
+     + MULTI_SIO_INTR_CLOCK_MAX)
 // Timer Count Minimum Value
 #define MULTI_SIO_TIMER_COUNT_MAX 0x10000 // Timer Count Maximum Value
 #define MULTI_SIO_TIMER_COUNT     (MULTI_SIO_TIMER_COUNT_MAX - MULTI_SIO_TIMER_COUNT_TMP)
@@ -127,9 +128,11 @@ struct MultiSioArea {
     // Receive Buffer (Triple Buffer)
 };
 
-extern u32 gMultiSioRecvFuncBuf[0x40 / 4]; // Receive Data/Check Buffer Change Routine
+#ifdef MULTI_SIO_DI_FUNC_FAST
+extern u32 gMultiSioRecvFuncBuf[0x40 / 4]; // Receive data/sa2/Check Buffer Change Routine
                                            // RAM Execution Buffer
 extern u32 gMultiSioIntrFuncBuf[0x120 / 4]; // Interrupt Routine RAM Execution Buffer
+#endif
 
 extern struct MultiSioArea gMultiSioArea; // Multi-play Communication Work Area
 
@@ -214,9 +217,8 @@ extern u32 MultiSioMain(void *sendp, void *recvp, u32 loadRequest);
 #define MULTI_SIO_RECV_ID(x)      (0x0001 << (x))
 #define MULTI_SIO_CONNECTED_ID(x) (0x0100 << (x))
 
-#define MULTI_SIO_ALL_CONNECTED                                                         \
-    (MULTI_SIO_CONNECTED_ID(0) | MULTI_SIO_CONNECTED_ID(1) | MULTI_SIO_CONNECTED_ID(2)  \
-     | MULTI_SIO_CONNECTED_ID(3))
+#define MULTI_SIO_ALL_CONNECTED                                                                                                            \
+    (MULTI_SIO_CONNECTED_ID(0) | MULTI_SIO_CONNECTED_ID(1) | MULTI_SIO_CONNECTED_ID(2) | MULTI_SIO_CONNECTED_ID(3))
 
 // Return Value Structure
 struct MultiSioReturn {

@@ -1,45 +1,86 @@
 #ifndef GUARD_GLOBAL_H
 #define GUARD_GLOBAL_H
 
-#include "gba/gba.h"
+#include "config.h"
+#include "gba/gba.h" // TODO: Only actually include when compiling for GBA
+#include "color.h"
+
+#if PLATFORM_GBA
+#define ENABLE_AUDIO TRUE
+#else
+#define ENABLE_AUDIO     TRUE
+#define ENABLE_VRAM_VIEW !TRUE
+#endif
 
 #define CONST_DATA __attribute__((section(".data")))
 
 // #include "types.h"
 // #include "variables.h"
-#include "functions.h"
+
+#if !PLATFORM_GBA
+#ifdef _WIN32
+void *Platform_malloc(size_t numBytes);
+void *Platform_realloc(void *ptr, size_t numBytes);
+void Platform_free(void *ptr);
+#define malloc(numBytes)    Platform_malloc(numBytes)
+#define calloc(count, size) Platform_malloc(count *size)
+#define realloc(ptr, size)  Platform_realloc(ptr, size)
+#define free(numBytes)      Platform_free(numBytes)
+#endif
+#endif
 
 #define SIO_MULTI_CNT ((volatile struct SioMultiCnt *)REG_ADDR_SIOCNT)
 
+typedef void (*VoidFn)(void);
+
 // helper macros
 
-#if NON_MATCHING
-#define ASM_FUNC(path, decl)
+// This macro is only needed while SA2 still has variables called gUnknown_XXXXXXX left
+#if ((GAME == GAME_SA1) || (GAME == GAME_SA3))
+#define SA2_LABEL(_label) sa2__##_label
 #else
-#define ASM_FUNC(path, decl)                                                            \
-    NAKED decl { asm(".include " #path); }
+#define SA2_LABEL(_label) _label
 #endif
 
-#if NON_MATCHING
+#if (PORTABLE)
+#define BUG_FIX
+
+#if !(defined NON_MATCHING)
+#define NON_MATCHING 1
+#endif
+#elif (DEBUG)
+#define NON_MATCHING 1
+#endif
+
+#ifdef NON_MATCHING
+#define ASM_FUNC(path, decl)
+#define TEMP_FIX 1
+#else
+#define ASM_FUNC(path, decl)                                                                                                               \
+    NAKED decl { asm(".include " #path); }
+#define TEMP_FIX 0
+#endif
+
+#ifdef NON_MATCHING
 #define NONMATCH(path, decl) decl
 #define END_NONMATCH
 #else
-#define NONMATCH(path, decl)                                                            \
-    NAKED decl                                                                          \
-    {                                                                                   \
-        asm(".include " #path);                                                         \
+#define NONMATCH(path, decl)                                                                                                               \
+    NAKED decl                                                                                                                             \
+    {                                                                                                                                      \
+        asm(".include " #path);                                                                                                            \
         if (0)
 #define END_NONMATCH }
 #endif
 
 /// IDE support
-#if defined(__APPLE__) || defined(__CYGWIN__) || defined(__INTELLISENSE__)
+#if defined(__CYGWIN__) || defined(__INTELLISENSE__)
 // We define these when using certain IDEs to fool preproc
 #define _(x)  (x)
 #define __(x) (x)
-#define INCBIN(...)                                                                     \
-    {                                                                                   \
-        0                                                                               \
+#define INCBIN(...)                                                                                                                        \
+    {                                                                                                                                      \
+        0                                                                                                                                  \
     }
 #define INCBIN_U8  INCBIN
 #define INCBIN_U16 INCBIN
@@ -49,6 +90,20 @@
 #define INCBIN_S32 INCBIN
 #endif // IDE support
 
+#if (GAME == GAME_SA1)
+#define INCBIN_MAP INCBIN_U8
+#else
+#define INCBIN_MAP INCBIN_U16
+#endif
+
+// Use STR(<macro>) to turn the macro's *content* into a string
+#define STR_(x) #x
+#define STR(x)  STR_(x)
+
+// NOTE: This has to be kept as-is.
+//       If casted it to be signed,
+//          dataIndex = (dataIndex + 1) % ARRAY_COUNT(data)
+//       wouldn't match.
 #define ARRAY_COUNT(array) (sizeof(array) / sizeof((array)[0]))
 
 // Converts a number to Q8.8 fixed-point format
@@ -63,17 +118,22 @@
 // Converts a number to Q2.14 fixed-point format
 #define Q_2_14(n) ((s16)((n)*0x4000))
 
-// Converts a number to Q24.8 fixed-point format
+// Converts a number to Q20.12 fixed-point format
 #define Q_20_12(n) ((s32)((n)*4096))
 
 // Converts a number to Q24.8 fixed-point format
-#define Q_24_8(n) ((s32)((n) << 8))
+#define Q_24_8(n)      ((s32)((n)*256))
+#define Q_24_8_FRAC(n) ((u8)(n))
+
+// This may be the "real" version as we are seeing better matches with
+// it in some cases
+#define Q_24_8_NEW(n) ((s32)((n) << 8))
 
 // Converts a Q8.8 fixed-point format number to a regular integer
-#define Q_8_8_TO_INT(n) ((int)((n) / 256))
+#define Q_8_8_TO_INT(n) ((int)((n) >> 8))
 
 // Converts a Q4.12 fixed-point format number to a regular integer
-#define Q_4_12_TO_INT(n) ((int)((n) / 4096))
+#define Q_4_12_TO_INT(n) ((int)((n) >> 12))
 
 // Converts a Q2.12 fixed-point format number to a regular integer
 #define Q_2_14_TO_INT(n) ((int)((n) >> 14))
@@ -87,25 +147,191 @@
 // Converts a Q16.16 fixed-point format number to a regular integer
 #define Q_16_16_TO_INT(n) ((int)((n) >> 0x10))
 
-#define RED_VALUE(color)   ((color)&0x1F)
-#define GREEN_VALUE(color) (((color) >> 5) & 0x1F)
-#define BLUE_VALUE(color)  (((color) >> 10) & 0x1F)
+// Converts a Q2.12 fixed-point format number to a Q24.8 fixed point number
+#define Q_2_14_TO_Q_24_8(n) ((int)((n) >> 6))
 
-#define ABS(aValue) ((aValue) >= 0 ? (aValue) : -(aValue))
+// Multiplies two Q values
+#define Q_MUL(qValA, qValB)         ((qValA * qValB) >> 8)
+#define Q_MUL_NEG(qValA, qValB)     (-(qValA * qValB) >> 8)
+#define Q_SQUARE(qVal)              Q_MUL(qVal, qVal)
+#define Q_DIV(qValA, qValB)         Div((qValA << 8), qValB)
+#define Q_DIV2(qValA, qValB)        ((qValA << 8) / qValB)
+#define Q_MUL_Q_F32(qVal, floatVal) Q_MUL(qVal, Q(floatVal))
+
+/*
+ * Aliases for common macros
+ */
+
+// Converts a number to Q24.8 fixed-point format
+#define Q(n) Q_24_8(n)
+
+// Converts a number to Q24.8 fixed-point format
+#define QS(n) Q_24_8_NEW(n)
+
+// Converts a Q24.8 fixed-point format number to a regular integer
+#define I(n) Q_24_8_TO_INT(n)
+
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+
+#define CLAMP(value, min, max)                                                                                                             \
+    ({                                                                                                                                     \
+        s32 clamped;                                                                                                                       \
+        if ((value) < (min)) {                                                                                                             \
+            clamped = (min);                                                                                                               \
+        } else {                                                                                                                           \
+            clamped = (value) > (max) ? (max) : (value);                                                                                   \
+        }                                                                                                                                  \
+        clamped;                                                                                                                           \
+    })
+
+#define CLAMP_T(type, value, min, max)                                                                                                     \
+    ({                                                                                                                                     \
+        type clamped;                                                                                                                      \
+        if ((value) >= (min)) {                                                                                                            \
+            clamped = (value) > (max) ? (max) : (value);                                                                                   \
+        } else {                                                                                                                           \
+            clamped = (min);                                                                                                               \
+        }                                                                                                                                  \
+        clamped;                                                                                                                           \
+    })
+
+#define CLAMP_16(value, min, max) CLAMP_T(s16, value, min, max)
+#define CLAMP_32(value, min, max) CLAMP_T(s32, value, min, max)
+
+#define CLAMP_INLINE(var, min, max)                                                                                                        \
+    ({                                                                                                                                     \
+        if ((var) < (min)) {                                                                                                               \
+            var = (min);                                                                                                                   \
+        } else if ((var) > (max)) {                                                                                                        \
+            var = (max);                                                                                                                   \
+        }                                                                                                                                  \
+    })
+
+#define CLAMP_INLINE_NO_ELSE(var, min, max)                                                                                                \
+    ({                                                                                                                                     \
+        if ((var) < (min)) {                                                                                                               \
+            var = (min);                                                                                                                   \
+        }                                                                                                                                  \
+                                                                                                                                           \
+        if ((var) > (max)) {                                                                                                               \
+            var = (max);                                                                                                                   \
+        }                                                                                                                                  \
+    })
+
+#define CLAMP_INLINE2(var, min, max)                                                                                                       \
+    ({                                                                                                                                     \
+        if ((var) > (max)) {                                                                                                               \
+            var = (max);                                                                                                                   \
+        } else if ((var) < (min)) {                                                                                                        \
+            var = (min);                                                                                                                   \
+        }                                                                                                                                  \
+    })
+
+#define ABS(aValue)  ((aValue) >= 0 ? (aValue) : -(aValue))
+#define ABS2(aValue) ((aValue) < 0 ? -(aValue) : (aValue))
 
 #define RECT_DISTANCE(aXA, aYA, aXB, aYB) (ABS((aXA) - (aXB)) + ABS((aYA) - (aYB)))
 
-#define GetBit(x, y) ((x) >> (y)&1)
+#define BitValue(y)      (1 << (y))
+#define CheckBit(x, y)   ((x) & (BitValue(y)))
+#define GetBit(x, y)     (((x) >> (y)) & 1)
+#define SetBit(x, y)     (x) |= BitValue(y)
+#define SetSoleBit(x, y) (x) = BitValue(y)
+#define ClearBit(x, y)   (x) &= ~BitValue(y)
+
+// TODO: Use instrinsics for these, on platforms that support it!
+// Like GetFirstSetBitIndex, but an external iterator can be passed.
+#define GetFirstSetBitIndexExt(value, max, it)                                                                                             \
+    ({                                                                                                                                     \
+        s32 res;                                                                                                                           \
+                                                                                                                                           \
+        for (it = 0; it < (max); it++) {                                                                                                   \
+            if (GetBit(value, it)) {                                                                                                       \
+                break;                                                                                                                     \
+            }                                                                                                                              \
+        }                                                                                                                                  \
+                                                                                                                                           \
+        res = it;                                                                                                                          \
+    })
+
+// Get the index to the first set bit in a given value.
+#define GetFirstSetBitIndex(value, max)                                                                                                    \
+    ({                                                                                                                                     \
+        s16 bit;                                                                                                                           \
+                                                                                                                                           \
+        bit = GetFirstSetBitIndexExt(value, max, bit);                                                                                     \
+    })
+
+// Like GetFirstSetBitIndex, but expects input value to only have 1 bit set.
+#define GetSoleSetBitIndex(value, max)                                                                                                     \
+    ({                                                                                                                                     \
+        s16 bit;                                                                                                                           \
+                                                                                                                                           \
+        for (bit = 0; bit < (max); bit++) {                                                                                                \
+            if ((value) == (1 << bit)) {                                                                                                   \
+                break;                                                                                                                     \
+            }                                                                                                                              \
+        }                                                                                                                                  \
+                                                                                                                                           \
+        bit;                                                                                                                               \
+    })
 
 // 60 is not exactly true as the GBA's FPS, but it's what they went
 // with for the calculation
 #define GBA_FRAMES_PER_SECOND 60
 
-#define SWAP_AND_NEGATE(a, b)                                                           \
-    a ^= b;                                                                             \
-    b ^= a;                                                                             \
-    a = (b ^ a) * -1;                                                                   \
-    b *= -1;
+// TODO: fix casts here(?)
+#define XOR_SWAP(a, b)                                                                                                                     \
+    a ^= (u8)b;                                                                                                                            \
+    b ^= (u8)a;                                                                                                                            \
+    a = ((u8)b ^ (u8)a);
+
+#define XOR_SWAP_2(a, b)                                                                                                                   \
+    ({                                                                                                                                     \
+        u16 x = a ^ b;                                                                                                                     \
+        u16 y = a ^ b ^ b;                                                                                                                 \
+        b = y;                                                                                                                             \
+        a = x ^ y;                                                                                                                         \
+    })
+
+#define XOR_SWAP_WORD(a, b)                                                                                                                \
+    a ^= b;                                                                                                                                \
+    b ^= a;                                                                                                                                \
+    a = (b ^ a);
+
+// TODO: fix casts here
+#define SWAP_AND_NEGATE(a, b)                                                                                                              \
+    a ^= (u8)b;                                                                                                                            \
+    b ^= (u8)a;                                                                                                                            \
+    a = ((u8)b ^ (u8)a) * -1;                                                                                                              \
+    b = (u8)b * -1;
+
+#define NEGATE(var)                                                                                                                        \
+    ({                                                                                                                                     \
+        s32 temp = var;                                                                                                                    \
+        var = -temp;                                                                                                                       \
+    })
+#define DIRECT_NEGATE(var) (var = -var;)
+
+#define HALVE(var) (var = (var >> 1))
+
+typedef struct {
+    s16 x;
+    s16 y;
+} Vec2_16;
+
+typedef struct {
+    s32 x;
+    s32 y;
+} Vec2_32;
+
+typedef struct {
+    u8 reserved : 4;
+    u8 compressedType : 4;
+    u32 size : 24;
+    void *data;
+} RLCompressed;
 
 struct BlendRegs {
     u16 bldCnt;
@@ -113,26 +339,20 @@ struct BlendRegs {
     u16 bldY;
 };
 
-struct BgAffineRegs {
-    u16 bg2pa;
-    u16 bg2pb;
-    u16 bg2pc;
-    u16 bg2pd;
-    u32 bg2x;
-    u32 bg2y;
-    u16 bg3pa;
-    u16 bg3pb;
-    u16 bg3pc;
-    u16 bg3pd;
-    u32 bg3x;
-    u32 bg3y;
-};
+// TODO: Should this be in a GBA-specific header file?
+#define NUM_AFFINE_BACKGROUNDS 2
+#define NUM_BACKGROUNDS        4
+
+// Values to be passed top the affine registers
+// (used by BG2/BG3 in affine screen modes)
+typedef struct {
+    /* 0x00 */ u16 pa, pb, pc, pd;
+    /* 0x08 */ u32 x, y;
+} BgAffineReg;
 
 // TODO: Find better place for this
-typedef void (*HBlankFunc)(u8 vcount);
+typedef void (*HBlankIntrFunc)(int_vcount vcount);
 typedef void (*IntrFunc)(void);
-typedef void (*FuncType_030053A0)(void);
-typedef u32 (*SpriteUpdateFunc)(void);
 
 extern void *iwram_end;
 extern void *ewram_end;

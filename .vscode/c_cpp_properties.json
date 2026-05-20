@@ -1,11 +1,37 @@
 {
     "configurations": [
         {
-            "name": "Linux",
+            "name": "SA2 Linux GBA",
             "includePath": [
                 "${workspaceFolder}/include/**"
             ],
-            "defines": [],
+            "defines": ["PLATFORM_GBA=1", "GAME=GAME_SA2"],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "linux-gcc-x64",
+            "configurationProvider": "ms-vscode.makefile-tools"
+        },
+        {
+            "name": "SA1 Linux GBA",
+            "includePath": [
+                "${workspaceFolder}/include/**", "${workspaceFolder}/sa1/include/**"
+            ],
+            "defines": ["PLATFORM_GBA=1", "GAME=GAME_SA1"],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "linux-gcc-x64",
+            "configurationProvider": "ms-vscode.makefile-tools"
+        },
+        {
+            "name": "Linux portable",
+            "includePath": [
+                "${workspaceFolder}/include/**"
+            ],
+            "defines": [
+                "PORTABLE=1"
+            ],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "gnu17",
             "cppStandard": "gnu++17",
@@ -16,6 +42,30 @@
             "name": "Linux-chao_garden",
             "includePath": [
                 "${workspaceFolder}/chao_garden/include/**"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "linux-gcc-x64",
+            "configurationProvider": "ms-vscode.makefile-tools"
+        },
+        {
+            "name": "Linux-subgame_loader",
+            "includePath": [
+                "${workspaceFolder}/multi_boot/subgame_loader/signed_payload/payload/include/**"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "linux-gcc-x64",
+            "configurationProvider": "ms-vscode.makefile-tools"
+        },
+        {
+            "name": "Linux-collect_rings_rom",
+            "includePath": [
+                "${workspaceFolder}/multi_boot/roms/collect_rings/include/**"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

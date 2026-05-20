@@ -62,7 +62,7 @@ void ConvertPngToGba(char *inputPath, char *outputPath, struct PngToGbaOptions *
 
     ReadPng(inputPath, &image);
 
-    WriteImage(outputPath, options->numTiles, options->bitDepth, options->metatileWidth, options->metatileHeight, &image, !image.hasPalette);
+    WriteImage(outputPath, options->numTiles, options->bitDepth, options->metatileWidth, options->metatileHeight, &image, !image.hasPalette, options->ignoreTrailingTiles, options->splitIntoOamShapes);
 
     FreeImage(&image);
 }
@@ -150,17 +150,31 @@ void HandlePngToGbaCommand(char *inputPath, char *outputPath, int argc, char **a
 {
     char *outputFileExtension = GetFileExtensionAfterDot(outputPath);
     int bitDepth = outputFileExtension[0] - '0';
-    struct PngToGbaOptions options;
+    struct PngToGbaOptions options = {0};
     options.numTiles = 0;
     options.bitDepth = bitDepth;
     options.metatileWidth = 1;
     options.metatileHeight = 1;
+    options.ignoreTrailingTiles = false;
+    options.splitIntoOamShapes = false;
+
 
     for (int i = 3; i < argc; i++)
     {
         char *option = argv[i];
 
-        if (strcmp(option, "-num_tiles") == 0)
+        
+        if(strcmp(option, "-ignore_trailing") == 0) {
+            // Tilesets in Sonic Advance 1 and 2 can have empty tiles at the end.
+            // These shall be ignored when -ignore_trailing is set.
+            options.ignoreTrailingTiles = true;
+        }
+        else if(strcmp(option, "-split_into_oam_shapes") == 0) {
+            // Tilesets in Sonic Advance 1 and 2 can have empty tiles at the end.
+            // These shall be ignored when -ignore_trailing is set.
+            options.splitIntoOamShapes = true;
+        }
+        else if (strcmp(option, "-num_tiles") == 0)
         {
             if (i + 1 >= argc)
                 FATAL_ERROR("No number of tiles following \"-num_tiles\".\n");
@@ -210,7 +224,7 @@ void HandlePngToGbaCommand(char *inputPath, char *outputPath, int argc, char **a
 
 void HandlePngToJascPaletteCommand(char *inputPath, char *outputPath, int argc UNUSED, char **argv UNUSED)
 {
-    struct Palette palette = {};
+    struct Palette palette = {0};
 
     ReadPngPalette(inputPath, &palette);
     WriteJascPalette(outputPath, &palette);
@@ -218,7 +232,7 @@ void HandlePngToJascPaletteCommand(char *inputPath, char *outputPath, int argc U
 
 void HandlePngToGbaPaletteCommand(char *inputPath, char *outputPath, int argc UNUSED, char **argv UNUSED)
 {
-    struct Palette palette = {};
+    struct Palette palette = {0};
 
     ReadPngPalette(inputPath, &palette);
     WriteGbaPalette(outputPath, &palette);
@@ -226,7 +240,7 @@ void HandlePngToGbaPaletteCommand(char *inputPath, char *outputPath, int argc UN
 
 void HandleGbaToJascPaletteCommand(char *inputPath, char *outputPath, int argc UNUSED, char **argv UNUSED)
 {
-    struct Palette palette = {};
+    struct Palette palette = {0};
 
     ReadGbaPalette(inputPath, &palette);
     WriteJascPalette(outputPath, &palette);
@@ -259,7 +273,7 @@ void HandleJascToGbaPaletteCommand(char *inputPath, char *outputPath, int argc, 
         }
     }
 
-    struct Palette palette = {};
+    struct Palette palette = {0};
 
     ReadJascPalette(inputPath, &palette);
 

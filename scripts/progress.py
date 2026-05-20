@@ -6,27 +6,45 @@ import git
 import os
 import re
 
-def collect_non_matching_funcs():
+def read_non_matching_funcs(filepath, game):
     result = []
-    for root, dirs, files in os.walk('src'):
-        for file in files:
-            if file.endswith('.c'):
-                with open(os.path.join(root, file), 'r') as f:
-                    data = f.read()
-                    # Find all NONMATCH and ASM_FUNC macros
-                    for match in re.findall(r'(NONMATCH|ASM_FUNC)\(".*",\W*\w*\W*(\w*).*\)', data):
-                        result.append(match)
+    with open(filepath, 'r') as f:
+        data = f.read()
+        lines = data.split("\n")
+        for i in range(len(lines)):
+            line = lines[i]
+            if "NONMATCH" in line:
+                if game == "sa1" and "sa2." in line:
+                    continue
+
+                if game == "sa2" and "sa1." in line:
+                    continue
+
+                # if "unused_"  in line.lower():
+                #     continue
+                matcher = r'(NONMATCH|ASM_FUNC)\(".*?",\s*\w+\s+(?:SA2_LABEL\()?(\w+).*\)'
+                match = re.findall(matcher, line)
+                if match:
+                    result.append(match[0][1])
+                else:
+                    if i < len(lines) - 1:
+                        line = lines[i + 1]
+                        match = re.findall(r'\W*\w*\W*(\w*).*\)', line)
+                        if match:
+                            result.append(match[0])
     return result
 
 
-def parse_map(non_matching_funcs):
+def parse_map(matching, map_file):
     src = 0
     asm = 0
     src_data = 0
     data = 0
+    game = map_file.replace(".map", "")
     non_matching = 0
+    non_matching_funcs = []
 
-    with open('sa2.map', 'r') as map:
+    with open(map_file, 'r') as map:
         # Skip to the linker script section
         line = map.readline()
         while not line.startswith('Linker script and memory map'):
@@ -44,10 +62,21 @@ def parse_map(non_matching_funcs):
                 section = arr[0]
                 size = int(arr[2], 16)
                 filepath = arr[3]
-                # build/sa2/../
-                #           ^ 
-                #   0    1  2          
-                dir = filepath.split('/')[2]
+                if (filepath.startswith('src')):
+                    if matching:
+                        c_path = filepath.replace(".o", ".c")
+                        if os.path.exists(c_path):
+                            non_matching_funcs += read_non_matching_funcs(c_path, game)
+                if filepath.startswith('build'):
+                    # build/*/(asm|data|sound|src|...)/*/
+                    #  ^    ^   ^
+                    #  0    1   2                      3  
+                    dir = filepath.split("/")[2]
+                else:
+                    # (asm|data|sound|src|...)/*/
+                    #  ^
+                    #  0                       1               
+                    dir = filepath.split('/')[0]
 
                 if section == '.text':
                     if dir == 'src':
@@ -74,6 +103,7 @@ def parse_map(non_matching_funcs):
                 if len(arr) == 2 and arr[1] != '':  # It is actually a symbol
 
                     if prev_symbol in non_matching_funcs:
+                        # non_matching_funcs.remove(prev_symbol)
                         # Calculate the length for non matching function
                         non_matching += int(arr[0], 16) - prev_addr
 
@@ -96,22 +126,10 @@ def main():
     parser.add_argument("format", nargs="?", default="text", choices=["text", "csv", "shield-json"])
     parser.add_argument("-m", "--matching", dest='matching', action='store_true',
                         help="Output matching progress instead of decompilation progress")
+    parser.add_argument("-f", "--file", dest='map_file', default="sa2.map")
     args = parser.parse_args()
 
-    matching = args.matching
-
-    non_matching_funcs = []
-    funcs = collect_non_matching_funcs()
-    if matching:
-        # Remove all non matching funcs from count
-        non_matching_funcs = [x[1] for x in funcs]
-    else:
-        # Only remove ASM_FUNC functions from count
-        for func in funcs:
-            if func[0] == 'ASM_FUNC':
-                non_matching_funcs.append(func[1])
-
-    (src, asm, src_data, data) = parse_map(non_matching_funcs)
+    (src, asm, src_data, data) = parse_map(args.matching, args.map_file)
 
     total = src + asm
     data_total = src_data + data
@@ -125,7 +143,7 @@ def main():
 
     if args.format == 'csv':
         version = 2
-        git_object = git.Repo().head.object
+        git_object = git.Repo(search_parent_directories=True).head.object
         timestamp = str(git_object.committed_date)
         git_hash = git_object.hexsha
 
@@ -138,9 +156,9 @@ def main():
         # https://shields.io/endpoint
         print(json.dumps({
             "schemaVersion": 1,
-            "label": "progress",
+            "label": "progress" if not args.matching else "matching",
             "message": f"{src_percent:.3g}%",
-            "color": 'yellow',
+            "color": 'yellow' if src_percent < 100 else "green",
         }))
 
     elif args.format == 'text':

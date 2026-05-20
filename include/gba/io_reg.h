@@ -1,7 +1,38 @@
 #ifndef GUARD_GBA_IO_REG_H
 #define GUARD_GBA_IO_REG_H
 
+#ifndef GEN_CTX
+#include <stdint.h>
+#endif
+
+// these are not hardware registers on ports
+// so there is no need to make re-read them
+#if PORTABLE
+typedef uint8_t reg_u8;
+typedef uint16_t reg_u16;
+typedef uint32_t reg_u32;
+typedef int16_t reg_s16; 
+typedef int32_t reg_s32; 
+typedef uint64_t reg_u64; 
+typedef winreg_t reg_wint; 
+#else
+typedef volatile uint8_t reg_u8;
+typedef volatile uint16_t reg_u16;
+typedef volatile uint32_t reg_u32;
+typedef volatile int16_t reg_s16; 
+typedef volatile int32_t reg_s32; 
+typedef volatile uint64_t reg_u64; 
+typedef volatile winreg_t reg_wint; 
+#endif
+
+
+#define IO_SIZE 0x400
+#if !PORTABLE
 #define REG_BASE 0x4000000 // I/O register base address
+#else
+// TODO: Needs to be u8 because of the address macros
+extern unsigned char REG_BASE[IO_SIZE];
+#endif
 
 // I/O register offsets
 
@@ -40,101 +71,117 @@
 #define REG_OFFSET_BG3Y        0x3c
 #define REG_OFFSET_BG3Y_L      0x3c
 #define REG_OFFSET_BG3Y_H      0x3e
-#define REG_OFFSET_WIN0H       0x40
-#define REG_OFFSET_WIN1H       0x42
-#define REG_OFFSET_WIN0V       0x44
-#define REG_OFFSET_WIN1V       0x46
-#define REG_OFFSET_WININ       0x48
-#define REG_OFFSET_WINOUT      0x4a
-#define REG_OFFSET_MOSAIC      0x4c
-#define REG_OFFSET_BLDCNT      0x50
-#define REG_OFFSET_BLDALPHA    0x52
-#define REG_OFFSET_BLDY        0x54
 
-#define REG_OFFSET_SOUND1CNT_L 0x60
-#define REG_OFFSET_NR10        0x60
-#define REG_OFFSET_SOUND1CNT_H 0x62
-#define REG_OFFSET_NR11        0x62
-#define REG_OFFSET_NR12        0x63
-#define REG_OFFSET_SOUND1CNT_X 0x64
-#define REG_OFFSET_NR13        0x64
-#define REG_OFFSET_NR14        0x65
-#define REG_OFFSET_SOUND2CNT_L 0x68
-#define REG_OFFSET_NR21        0x68
-#define REG_OFFSET_NR22        0x69
-#define REG_OFFSET_SOUND2CNT_H 0x6c
-#define REG_OFFSET_NR23        0x6c
-#define REG_OFFSET_NR24        0x6d
-#define REG_OFFSET_SOUND3CNT_L 0x70
-#define REG_OFFSET_NR30        0x70
-#define REG_OFFSET_SOUND3CNT_H 0x72
-#define REG_OFFSET_NR31        0x72
-#define REG_OFFSET_NR32        0x73
-#define REG_OFFSET_SOUND3CNT_X 0x74
-#define REG_OFFSET_NR33        0x74
-#define REG_OFFSET_NR34        0x75
-#define REG_OFFSET_SOUND4CNT_L 0x78
-#define REG_OFFSET_NR41        0x78
-#define REG_OFFSET_NR42        0x79
-#define REG_OFFSET_SOUND4CNT_H 0x7c
-#define REG_OFFSET_NR43        0x7c
-#define REG_OFFSET_NR44        0x7d
-#define REG_OFFSET_SOUNDCNT_L  0x80
-#define REG_OFFSET_NR50        0x80
-#define REG_OFFSET_NR51        0x81
-#define REG_OFFSET_SOUNDCNT_H  0x82
-#define REG_OFFSET_SOUNDCNT_X  0x84
-#define REG_OFFSET_NR52        0x84
-#define REG_OFFSET_SOUNDBIAS   0x88
-#define REG_OFFSET_SOUNDBIAS_L 0x88
-#define REG_OFFSET_SOUNDBIAS_H 0x89
-#define REG_OFFSET_WAVE_RAM0   0x90
-#define REG_OFFSET_WAVE_RAM1   0x94
-#define REG_OFFSET_WAVE_RAM2   0x98
-#define REG_OFFSET_WAVE_RAM3   0x9c
-#define REG_OFFSET_FIFO_A      0xa0
-#define REG_OFFSET_FIFO_B      0xa4
+#define REG_OFFSET_WIN         0x40
 
-#define REG_OFFSET_DMA0        0xb0
-#define REG_OFFSET_DMA0SAD     0xb0
-#define REG_OFFSET_DMA0SAD_L   0xb0
-#define REG_OFFSET_DMA0SAD_H   0xb2
+#define REG_OFFSET_WIN0H       (REG_OFFSET_WIN + sizeof(winreg_t) * 0)
+#define REG_OFFSET_WIN1H       (REG_OFFSET_WIN + sizeof(winreg_t) * 1)
+#define REG_OFFSET_WIN0V       (REG_OFFSET_WIN + sizeof(winreg_t) * 2)
+#define REG_OFFSET_WIN1V       (REG_OFFSET_WIN + sizeof(winreg_t) * 3)
+#define REG_OFFSET_WININ       (REG_OFFSET_WIN + sizeof(winreg_t) * 4)
+#define REG_OFFSET_WINOUT      (REG_OFFSET_WIN + sizeof(winreg_t) * 5)
+
+#define REG_OFFSET_WIN_END     (REG_OFFSET_WIN + sizeof(winreg_t) * 6)
+
+#define REG_OFFSET_MOSAIC      REG_OFFSET_WIN_END
+#define REG_OFFSET_BLDCNT      (REG_OFFSET_MOSAIC + 4)
+#define REG_OFFSET_BLDALPHA    (REG_OFFSET_BLDCNT + 2)
+#define REG_OFFSET_BLDY        (REG_OFFSET_BLDALPHA + 2)
+
+// Starts at 10 after BLDY (0x60 on the GBA)
+#define REG_OFFSET_SOUND       REG_OFFSET_BLDY + 2 + 10
+
+#define REG_OFFSET_SOUND1CNT_L REG_OFFSET_SOUND + 0x0
+#define REG_OFFSET_NR10        REG_OFFSET_SOUND + 0x0
+#define REG_OFFSET_SOUND1CNT_H REG_OFFSET_SOUND + 0x2
+#define REG_OFFSET_NR11        REG_OFFSET_SOUND + 0x2
+#define REG_OFFSET_NR12        REG_OFFSET_SOUND + 0x3
+#define REG_OFFSET_SOUND1CNT_X REG_OFFSET_SOUND + 0x4
+#define REG_OFFSET_NR13        REG_OFFSET_SOUND + 0x4
+#define REG_OFFSET_NR14        REG_OFFSET_SOUND + 0x5
+#define REG_OFFSET_SOUND2CNT_L REG_OFFSET_SOUND + 0x8
+#define REG_OFFSET_NR21        REG_OFFSET_SOUND + 0x8
+#define REG_OFFSET_NR22        REG_OFFSET_SOUND + 0x9
+#define REG_OFFSET_SOUND2CNT_H REG_OFFSET_SOUND + 0xC
+#define REG_OFFSET_NR23        REG_OFFSET_SOUND + 0xC
+#define REG_OFFSET_NR24        REG_OFFSET_SOUND + 0xD
+#define REG_OFFSET_SOUND3CNT_L REG_OFFSET_SOUND + 0x10
+#define REG_OFFSET_NR30        REG_OFFSET_SOUND + 0x10
+#define REG_OFFSET_SOUND3CNT_H REG_OFFSET_SOUND + 0x12
+#define REG_OFFSET_NR31        REG_OFFSET_SOUND + 0x12
+#define REG_OFFSET_NR32        REG_OFFSET_SOUND + 0x13
+#define REG_OFFSET_SOUND3CNT_X REG_OFFSET_SOUND + 0x14
+#define REG_OFFSET_NR33        REG_OFFSET_SOUND + 0x14
+#define REG_OFFSET_NR34        REG_OFFSET_SOUND + 0x15
+#define REG_OFFSET_SOUND4CNT_L REG_OFFSET_SOUND + 0x18
+#define REG_OFFSET_NR41        REG_OFFSET_SOUND + 0x18
+#define REG_OFFSET_NR42        REG_OFFSET_SOUND + 0x19
+#define REG_OFFSET_SOUND4CNT_H REG_OFFSET_SOUND + 0x1c
+#define REG_OFFSET_NR43        REG_OFFSET_SOUND + 0x1c
+#define REG_OFFSET_NR44        REG_OFFSET_SOUND + 0x1d
+#define REG_OFFSET_SOUNDCNT_L  REG_OFFSET_SOUND + 0x20
+#define REG_OFFSET_NR50        REG_OFFSET_SOUND + 0x20
+#define REG_OFFSET_NR51        REG_OFFSET_SOUND + 0x21
+#define REG_OFFSET_SOUNDCNT_H  REG_OFFSET_SOUND + 0x22
+#define REG_OFFSET_SOUNDCNT_X  REG_OFFSET_SOUND + 0x24
+#define REG_OFFSET_NR52        REG_OFFSET_SOUND + 0x24
+#define REG_OFFSET_SOUNDBIAS   REG_OFFSET_SOUND + 0x28
+#define REG_OFFSET_SOUNDBIAS_L REG_OFFSET_SOUND + 0x28
+#define REG_OFFSET_SOUNDBIAS_H REG_OFFSET_SOUND + 0x29
+#define REG_OFFSET_WAVE_RAM0   REG_OFFSET_SOUND + 0x30
+#define REG_OFFSET_WAVE_RAM1   REG_OFFSET_SOUND + 0x34
+#define REG_OFFSET_WAVE_RAM2   REG_OFFSET_SOUND + 0x38
+#define REG_OFFSET_WAVE_RAM3   REG_OFFSET_SOUND + 0x3c
+#define REG_OFFSET_FIFO_A      REG_OFFSET_SOUND + 0x40
+#define REG_OFFSET_FIFO_B      REG_OFFSET_SOUND + 0x44
+
+#define REG_OFFSET_DMA         REG_OFFSET_SOUND + 0x50
+#if !USE_NEW_DMA
+#define REG_OFFSET_DMA0SAD     REG_OFFSET_DMA
 #define REG_OFFSET_DMA0DAD     0xb4
-#define REG_OFFSET_DMA0DAD_L   0xb4
-#define REG_OFFSET_DMA0DAD_H   0xb6
 #define REG_OFFSET_DMA0CNT     0xb8
 #define REG_OFFSET_DMA0CNT_L   0xb8
 #define REG_OFFSET_DMA0CNT_H   0xba
-#define REG_OFFSET_DMA1        0xbc
 #define REG_OFFSET_DMA1SAD     0xbc
-#define REG_OFFSET_DMA1SAD_L   0xbc
-#define REG_OFFSET_DMA1SAD_H   0xbe
 #define REG_OFFSET_DMA1DAD     0xc0
-#define REG_OFFSET_DMA1DAD_L   0xc0
-#define REG_OFFSET_DMA1DAD_H   0xc2
 #define REG_OFFSET_DMA1CNT     0xc4
 #define REG_OFFSET_DMA1CNT_L   0xc4
 #define REG_OFFSET_DMA1CNT_H   0xc6
-#define REG_OFFSET_DMA2        0xc8
 #define REG_OFFSET_DMA2SAD     0xc8
-#define REG_OFFSET_DMA2SAD_L   0xc8
-#define REG_OFFSET_DMA2SAD_H   0xca
 #define REG_OFFSET_DMA2DAD     0xcc
-#define REG_OFFSET_DMA2DAD_L   0xcc
-#define REG_OFFSET_DMA2DAD_H   0xce
 #define REG_OFFSET_DMA2CNT     0xd0
 #define REG_OFFSET_DMA2CNT_L   0xd0
 #define REG_OFFSET_DMA2CNT_H   0xd2
-#define REG_OFFSET_DMA3        0xd4
 #define REG_OFFSET_DMA3SAD     0xd4
-#define REG_OFFSET_DMA3SAD_L   0xd4
-#define REG_OFFSET_DMA3SAD_H   0xd6
 #define REG_OFFSET_DMA3DAD     0xd8
-#define REG_OFFSET_DMA3DAD_L   0xd8
-#define REG_OFFSET_DMA3DAD_H   0xda
 #define REG_OFFSET_DMA3CNT     0xdc
 #define REG_OFFSET_DMA3CNT_L   0xdc
 #define REG_OFFSET_DMA3CNT_H   0xde
+#else
+// To fit this into the same memory footprint on 64bit,
+// We need to put the control registers behind the pointers to avoid padding.
+#define REG_OFFSET_DMA0SAD     REG_OFFSET_DMA
+#define REG_OFFSET_DMA1SAD     (REG_OFFSET_DMA0SAD + sizeof(uintptr_t))
+#define REG_OFFSET_DMA2SAD     (REG_OFFSET_DMA1SAD + sizeof(uintptr_t))
+#define REG_OFFSET_DMA3SAD     (REG_OFFSET_DMA2SAD + sizeof(uintptr_t))
+#define REG_OFFSET_DMA0DAD     (REG_OFFSET_DMA3SAD + sizeof(uintptr_t))
+#define REG_OFFSET_DMA1DAD     (REG_OFFSET_DMA0DAD + sizeof(uintptr_t))
+#define REG_OFFSET_DMA2DAD     (REG_OFFSET_DMA1DAD + sizeof(uintptr_t))
+#define REG_OFFSET_DMA3DAD     (REG_OFFSET_DMA2DAD + sizeof(uintptr_t))
+
+#define REG_OFFSET_DMA0CNT     (REG_OFFSET_DMA3DAD + sizeof(uintptr_t))
+#define REG_OFFSET_DMA0CNT_L   (REG_OFFSET_DMA0CNT + 0)
+#define REG_OFFSET_DMA0CNT_H   (REG_OFFSET_DMA0CNT_L + sizeof(uint16_t))
+#define REG_OFFSET_DMA1CNT     (REG_OFFSET_DMA0CNT_H + sizeof(uint16_t))
+#define REG_OFFSET_DMA1CNT_L   (REG_OFFSET_DMA1CNT + 0)
+#define REG_OFFSET_DMA1CNT_H   (REG_OFFSET_DMA1CNT_L + sizeof(uint16_t))
+#define REG_OFFSET_DMA2CNT     (REG_OFFSET_DMA1CNT_H + sizeof(uint16_t))
+#define REG_OFFSET_DMA2CNT_L   (REG_OFFSET_DMA2CNT + 0)
+#define REG_OFFSET_DMA2CNT_H   (REG_OFFSET_DMA2CNT_L + sizeof(uint16_t))
+#define REG_OFFSET_DMA3CNT     (REG_OFFSET_DMA2CNT_H + sizeof(uint16_t))
+#define REG_OFFSET_DMA3CNT_L   (REG_OFFSET_DMA3CNT + 0)
+#define REG_OFFSET_DMA3CNT_H   (REG_OFFSET_DMA3CNT_L + sizeof(uint16_t))
+#endif
 
 #define REG_OFFSET_TMCNT       0x100
 #define REG_OFFSET_TMCNT_L     0x100
@@ -274,25 +321,21 @@
 #define REG_ADDR_FIFO_A      (REG_BASE + REG_OFFSET_FIFO_A)
 #define REG_ADDR_FIFO_B      (REG_BASE + REG_OFFSET_FIFO_B)
 
-#define REG_ADDR_DMA0        (REG_BASE + REG_OFFSET_DMA0)
 #define REG_ADDR_DMA0SAD     (REG_BASE + REG_OFFSET_DMA0SAD)
 #define REG_ADDR_DMA0DAD     (REG_BASE + REG_OFFSET_DMA0DAD)
 #define REG_ADDR_DMA0CNT     (REG_BASE + REG_OFFSET_DMA0CNT)
 #define REG_ADDR_DMA0CNT_L   (REG_BASE + REG_OFFSET_DMA0CNT_L)
 #define REG_ADDR_DMA0CNT_H   (REG_BASE + REG_OFFSET_DMA0CNT_H)
-#define REG_ADDR_DMA1        (REG_BASE + REG_OFFSET_DMA1)
 #define REG_ADDR_DMA1SAD     (REG_BASE + REG_OFFSET_DMA1SAD)
 #define REG_ADDR_DMA1DAD     (REG_BASE + REG_OFFSET_DMA1DAD)
 #define REG_ADDR_DMA1CNT     (REG_BASE + REG_OFFSET_DMA1CNT)
 #define REG_ADDR_DMA1CNT_L   (REG_BASE + REG_OFFSET_DMA1CNT_L)
 #define REG_ADDR_DMA1CNT_H   (REG_BASE + REG_OFFSET_DMA1CNT_H)
-#define REG_ADDR_DMA2        (REG_BASE + REG_OFFSET_DMA2)
 #define REG_ADDR_DMA2SAD     (REG_BASE + REG_OFFSET_DMA2SAD)
 #define REG_ADDR_DMA2DAD     (REG_BASE + REG_OFFSET_DMA2DAD)
 #define REG_ADDR_DMA2CNT     (REG_BASE + REG_OFFSET_DMA2CNT)
 #define REG_ADDR_DMA2CNT_L   (REG_BASE + REG_OFFSET_DMA2CNT_L)
 #define REG_ADDR_DMA2CNT_H   (REG_BASE + REG_OFFSET_DMA2CNT_H)
-#define REG_ADDR_DMA3        (REG_BASE + REG_OFFSET_DMA3)
 #define REG_ADDR_DMA3SAD     (REG_BASE + REG_OFFSET_DMA3SAD)
 #define REG_ADDR_DMA3DAD     (REG_BASE + REG_OFFSET_DMA3DAD)
 #define REG_ADDR_DMA3CNT     (REG_BASE + REG_OFFSET_DMA3CNT)
@@ -347,154 +390,155 @@
 
 // I/O registers
 
-#define REG_DISPCNT     (*(vu16 *)REG_ADDR_DISPCNT)
-#define REG_DISPSTAT    (*(vu16 *)REG_ADDR_DISPSTAT)
-#define REG_VCOUNT      (*(vu16 *)REG_ADDR_VCOUNT)
-#define REG_BG0CNT      (*(vu16 *)REG_ADDR_BG0CNT)
-#define REG_BG1CNT      (*(vu16 *)REG_ADDR_BG1CNT)
-#define REG_BG2CNT      (*(vu16 *)REG_ADDR_BG2CNT)
-#define REG_BG3CNT      (*(vu16 *)REG_ADDR_BG3CNT)
-#define REG_BG0HOFS     (*(vu16 *)REG_ADDR_BG0HOFS)
-#define REG_BG0VOFS     (*(vu16 *)REG_ADDR_BG0VOFS)
-#define REG_BG1HOFS     (*(vu16 *)REG_ADDR_BG1HOFS)
-#define REG_BG1VOFS     (*(vu16 *)REG_ADDR_BG1VOFS)
-#define REG_BG2HOFS     (*(vu16 *)REG_ADDR_BG2HOFS)
-#define REG_BG2VOFS     (*(vu16 *)REG_ADDR_BG2VOFS)
-#define REG_BG3HOFS     (*(vu16 *)REG_ADDR_BG3HOFS)
-#define REG_BG3VOFS     (*(vu16 *)REG_ADDR_BG3VOFS)
-#define REG_BG2PA       (*(vu16 *)REG_ADDR_BG2PA)
-#define REG_BG2PB       (*(vu16 *)REG_ADDR_BG2PB)
-#define REG_BG2PC       (*(vu16 *)REG_ADDR_BG2PC)
-#define REG_BG2PD       (*(vu16 *)REG_ADDR_BG2PD)
-#define REG_BG2X        (*(vu32 *)REG_ADDR_BG2X)
-#define REG_BG2X_L      (*(vu16 *)REG_ADDR_BG2X_L)
-#define REG_BG2X_H      (*(vu16 *)REG_ADDR_BG2X_H)
-#define REG_BG2Y        (*(vu32 *)REG_ADDR_BG2Y)
-#define REG_BG2Y_L      (*(vu16 *)REG_ADDR_BG2Y_L)
-#define REG_BG2Y_H      (*(vu16 *)REG_ADDR_BG2Y_H)
-#define REG_BG3PA       (*(vu16 *)REG_ADDR_BG3PA)
-#define REG_BG3PB       (*(vu16 *)REG_ADDR_BG3PB)
-#define REG_BG3PC       (*(vu16 *)REG_ADDR_BG3PC)
-#define REG_BG3PD       (*(vu16 *)REG_ADDR_BG3PD)
-#define REG_BG3X        (*(vu32 *)REG_ADDR_BG3X)
-#define REG_BG3X_L      (*(vu16 *)REG_ADDR_BG3X_L)
-#define REG_BG3X_H      (*(vu16 *)REG_ADDR_BG3X_H)
-#define REG_BG3Y        (*(vu32 *)REG_ADDR_BG3Y)
-#define REG_BG3Y_L      (*(vu16 *)REG_ADDR_BG3Y_L)
-#define REG_BG3Y_H      (*(vu16 *)REG_ADDR_BG3Y_H)
-#define REG_WIN0H       (*(vu16 *)REG_ADDR_WIN0H)
-#define REG_WIN1H       (*(vu16 *)REG_ADDR_WIN1H)
-#define REG_WIN0V       (*(vu16 *)REG_ADDR_WIN0V)
-#define REG_WIN1V       (*(vu16 *)REG_ADDR_WIN1V)
-#define REG_WININ       (*(vu16 *)REG_ADDR_WININ)
-#define REG_WINOUT      (*(vu16 *)REG_ADDR_WINOUT)
-#define REG_MOSAIC      (*(vu16 *)REG_ADDR_MOSAIC)
-#define REG_BLDCNT      (*(vu16 *)REG_ADDR_BLDCNT)
-#define REG_BLDALPHA    (*(vu16 *)REG_ADDR_BLDALPHA)
-#define REG_BLDY        (*(vu16 *)REG_ADDR_BLDY)
+#define REG_DISPCNT     (*(reg_u16 *)REG_ADDR_DISPCNT)
+#define REG_DISPSTAT    (*(reg_u16 *)REG_ADDR_DISPSTAT)
+#define REG_VCOUNT      (*(reg_u16 *)REG_ADDR_VCOUNT)
+#define REG_BG0CNT      (*(reg_u16 *)REG_ADDR_BG0CNT)
+#define REG_BG1CNT      (*(reg_u16 *)REG_ADDR_BG1CNT)
+#define REG_BG2CNT      (*(reg_u16 *)REG_ADDR_BG2CNT)
+#define REG_BG3CNT      (*(reg_u16 *)REG_ADDR_BG3CNT)
+#define REG_BG0HOFS     (*(reg_u16 *)REG_ADDR_BG0HOFS)
+#define REG_BG0VOFS     (*(reg_u16 *)REG_ADDR_BG0VOFS)
+#define REG_BG1HOFS     (*(reg_u16 *)REG_ADDR_BG1HOFS)
+#define REG_BG1VOFS     (*(reg_u16 *)REG_ADDR_BG1VOFS)
+#define REG_BG2HOFS     (*(reg_u16 *)REG_ADDR_BG2HOFS)
+#define REG_BG2VOFS     (*(reg_u16 *)REG_ADDR_BG2VOFS)
+#define REG_BG3HOFS     (*(reg_u16 *)REG_ADDR_BG3HOFS)
+#define REG_BG3VOFS     (*(reg_u16 *)REG_ADDR_BG3VOFS)
+#define REG_BG2PA       (*(reg_u16 *)REG_ADDR_BG2PA)
+#define REG_BG2PB       (*(reg_u16 *)REG_ADDR_BG2PB)
+#define REG_BG2PC       (*(reg_u16 *)REG_ADDR_BG2PC)
+#define REG_BG2PD       (*(reg_u16 *)REG_ADDR_BG2PD)
+#define REG_BG2X        (*(reg_u32 *)REG_ADDR_BG2X)
+#define REG_BG2X_L      (*(reg_u16 *)REG_ADDR_BG2X_L)
+#define REG_BG2X_H      (*(reg_u16 *)REG_ADDR_BG2X_H)
+#define REG_BG2Y        (*(reg_u32 *)REG_ADDR_BG2Y)
+#define REG_BG2Y_L      (*(reg_u16 *)REG_ADDR_BG2Y_L)
+#define REG_BG2Y_H      (*(reg_u16 *)REG_ADDR_BG2Y_H)
+#define REG_BG3PA       (*(reg_u16 *)REG_ADDR_BG3PA)
+#define REG_BG3PB       (*(reg_u16 *)REG_ADDR_BG3PB)
+#define REG_BG3PC       (*(reg_u16 *)REG_ADDR_BG3PC)
+#define REG_BG3PD       (*(reg_u16 *)REG_ADDR_BG3PD)
+#define REG_BG3X        (*(reg_u32 *)REG_ADDR_BG3X)
+#define REG_BG3X_L      (*(reg_u16 *)REG_ADDR_BG3X_L)
+#define REG_BG3X_H      (*(reg_u16 *)REG_ADDR_BG3X_H)
+#define REG_BG3Y        (*(reg_u32 *)REG_ADDR_BG3Y)
+#define REG_BG3Y_L      (*(reg_u16 *)REG_ADDR_BG3Y_L)
+#define REG_BG3Y_H      (*(reg_u16 *)REG_ADDR_BG3Y_H)
+#define REG_WIN0H       (*(reg_wint *)REG_ADDR_WIN0H)
+#define REG_WIN1H       (*(reg_wint *)REG_ADDR_WIN1H)
+#define REG_WIN0V       (*(reg_wint *)REG_ADDR_WIN0V)
+#define REG_WIN1V       (*(reg_wint *)REG_ADDR_WIN1V)
+#define REG_WININ       (*(reg_wint *)REG_ADDR_WININ)
+#define REG_WINOUT      (*(reg_wint *)REG_ADDR_WINOUT)
+#define REG_MOSAIC      (*(reg_u16 *)REG_ADDR_MOSAIC)
+#define REG_BLDCNT      (*(reg_u16 *)REG_ADDR_BLDCNT)
+#define REG_BLDALPHA    (*(reg_u16 *)REG_ADDR_BLDALPHA)
+#define REG_BLDY        (*(reg_u16 *)REG_ADDR_BLDY)
 
-#define REG_SOUND1CNT_L (*(vu16 *)REG_ADDR_SOUND1CNT_L)
-#define REG_NR10        (*(vu8  *)REG_ADDR_NR10)
-#define REG_SOUND1CNT_H (*(vu16 *)REG_ADDR_SOUND1CNT_H)
-#define REG_NR11        (*(vu8  *)REG_ADDR_NR11)
-#define REG_NR12        (*(vu8  *)REG_ADDR_NR12)
-#define REG_SOUND1CNT_X (*(vu16 *)REG_ADDR_SOUND1CNT_X)
-#define REG_NR13        (*(vu8  *)REG_ADDR_NR13)
-#define REG_NR14        (*(vu8  *)REG_ADDR_NR14)
-#define REG_SOUND2CNT_L (*(vu16 *)REG_ADDR_SOUND2CNT_L)
-#define REG_NR21        (*(vu8  *)REG_ADDR_NR21)
-#define REG_NR22        (*(vu8  *)REG_ADDR_NR22)
-#define REG_SOUND2CNT_H (*(vu16 *)REG_ADDR_SOUND2CNT_H)
-#define REG_NR23        (*(vu8  *)REG_ADDR_NR23)
-#define REG_NR24        (*(vu8  *)REG_ADDR_NR24)
-#define REG_SOUND3CNT_L (*(vu16 *)REG_ADDR_SOUND3CNT_L)
-#define REG_NR30        (*(vu8  *)REG_ADDR_NR30)
-#define REG_SOUND3CNT_H (*(vu16 *)REG_ADDR_SOUND3CNT_H)
-#define REG_NR31        (*(vu8  *)REG_ADDR_NR31)
-#define REG_NR32        (*(vu8  *)REG_ADDR_NR32)
-#define REG_SOUND3CNT_X (*(vu16 *)REG_ADDR_SOUND3CNT_X)
-#define REG_NR33        (*(vu8  *)REG_ADDR_NR33)
-#define REG_NR34        (*(vu8  *)REG_ADDR_NR34)
-#define REG_SOUND4CNT_L (*(vu16 *)REG_ADDR_SOUND4CNT_L)
-#define REG_NR41        (*(vu8  *)REG_ADDR_NR41)
-#define REG_NR42        (*(vu8  *)REG_ADDR_NR42)
-#define REG_SOUND4CNT_H (*(vu16 *)REG_ADDR_SOUND4CNT_H)
-#define REG_NR43        (*(vu8  *)REG_ADDR_NR43)
-#define REG_NR44        (*(vu8  *)REG_ADDR_NR44)
-#define REG_SOUNDCNT_L  (*(vu16 *)REG_ADDR_SOUNDCNT_L)
-#define REG_NR50        (*(vu8  *)REG_ADDR_NR50)
-#define REG_NR51        (*(vu8  *)REG_ADDR_NR51)
-#define REG_SOUNDCNT_H  (*(vu16 *)REG_ADDR_SOUNDCNT_H)
-#define REG_SOUNDCNT_X  (*(vu16 *)REG_ADDR_SOUNDCNT_X)
-#define REG_NR52        (*(vu8  *)REG_ADDR_NR52)
-#define REG_SOUNDBIAS   (*(vu16 *)REG_ADDR_SOUNDBIAS)
-#define REG_SOUNDBIAS_L (*(vu8  *)REG_ADDR_SOUNDBIAS_L)
-#define REG_SOUNDBIAS_H (*(vu8  *)REG_ADDR_SOUNDBIAS_H)
-#define REG_WAVE_RAM0   (*(vu32 *)REG_ADDR_WAVE_RAM0)
-#define REG_WAVE_RAM1   (*(vu32 *)REG_ADDR_WAVE_RAM1)
-#define REG_WAVE_RAM2   (*(vu32 *)REG_ADDR_WAVE_RAM2)
-#define REG_WAVE_RAM3   (*(vu32 *)REG_ADDR_WAVE_RAM3)
-#define REG_FIFO_A      (*(vu32 *)REG_ADDR_FIFO_A)
-#define REG_FIFO_B      (*(vu32 *)REG_ADDR_FIFO_B)
+#define REG_SOUND1CNT_L (*(reg_u16 *)REG_ADDR_SOUND1CNT_L)
+#define REG_NR10        (*(reg_u8  *)REG_ADDR_NR10)
+#define REG_SOUND1CNT_H (*(reg_u16 *)REG_ADDR_SOUND1CNT_H)
+#define REG_NR11        (*(reg_u8  *)REG_ADDR_NR11)
+#define REG_NR12        (*(reg_u8  *)REG_ADDR_NR12)
+#define REG_SOUND1CNT_X (*(reg_u16 *)REG_ADDR_SOUND1CNT_X)
+#define REG_NR13        (*(reg_u8  *)REG_ADDR_NR13)
+#define REG_NR14        (*(reg_u8  *)REG_ADDR_NR14)
+#define REG_SOUND2CNT_L (*(reg_u16 *)REG_ADDR_SOUND2CNT_L)
+#define REG_NR21        (*(reg_u8  *)REG_ADDR_NR21)
+#define REG_NR22        (*(reg_u8  *)REG_ADDR_NR22)
+#define REG_SOUND2CNT_H (*(reg_u16 *)REG_ADDR_SOUND2CNT_H)
+#define REG_NR23        (*(reg_u8  *)REG_ADDR_NR23)
+#define REG_NR24        (*(reg_u8  *)REG_ADDR_NR24)
+#define REG_SOUND3CNT_L (*(reg_u16 *)REG_ADDR_SOUND3CNT_L)
+#define REG_NR30        (*(reg_u8  *)REG_ADDR_NR30)
+#define REG_SOUND3CNT_H (*(reg_u16 *)REG_ADDR_SOUND3CNT_H)
+#define REG_NR31        (*(reg_u8  *)REG_ADDR_NR31)
+#define REG_NR32        (*(reg_u8  *)REG_ADDR_NR32)
+#define REG_SOUND3CNT_X (*(reg_u16 *)REG_ADDR_SOUND3CNT_X)
+#define REG_NR33        (*(reg_u8  *)REG_ADDR_NR33)
+#define REG_NR34        (*(reg_u8  *)REG_ADDR_NR34)
+#define REG_SOUND4CNT_L (*(reg_u16 *)REG_ADDR_SOUND4CNT_L)
+#define REG_NR41        (*(reg_u8  *)REG_ADDR_NR41)
+#define REG_NR42        (*(reg_u8  *)REG_ADDR_NR42)
+#define REG_SOUND4CNT_H (*(reg_u16 *)REG_ADDR_SOUND4CNT_H)
+#define REG_NR43        (*(reg_u8  *)REG_ADDR_NR43)
+#define REG_NR44        (*(reg_u8  *)REG_ADDR_NR44)
+#define REG_SOUNDCNT_L  (*(reg_u16 *)REG_ADDR_SOUNDCNT_L)
+#define REG_NR50        (*(reg_u8  *)REG_ADDR_NR50)
+#define REG_NR51        (*(reg_u8  *)REG_ADDR_NR51)
+#define REG_SOUNDCNT_H  (*(reg_u16 *)REG_ADDR_SOUNDCNT_H)
+#define REG_SOUNDCNT_X  (*(reg_u16 *)REG_ADDR_SOUNDCNT_X)
+#define REG_NR52        (*(reg_u8  *)REG_ADDR_NR52)
+#define REG_SOUNDBIAS   (*(reg_u16 *)REG_ADDR_SOUNDBIAS)
+#define REG_SOUNDBIAS_L (*(reg_u8  *)REG_ADDR_SOUNDBIAS_L)
+#define REG_SOUNDBIAS_H (*(reg_u8  *)REG_ADDR_SOUNDBIAS_H)
+#define REG_WAVE_RAM0   (*(reg_u32 *)REG_ADDR_WAVE_RAM0)
+#define REG_WAVE_RAM1   (*(reg_u32 *)REG_ADDR_WAVE_RAM1)
+#define REG_WAVE_RAM2   (*(reg_u32 *)REG_ADDR_WAVE_RAM2)
+#define REG_WAVE_RAM3   (*(reg_u32 *)REG_ADDR_WAVE_RAM3)
+#define REG_FIFO_A      (*(reg_u32 *)REG_ADDR_FIFO_A)
+#define REG_FIFO_B      (*(reg_u32 *)REG_ADDR_FIFO_B)
 
-#define REG_DMA0SAD     (*(vu32 *)REG_ADDR_DMA0SAD)
-#define REG_DMA0DAD     (*(vu32 *)REG_ADDR_DMA0DAD)
-#define REG_DMA0CNT     (*(vu32 *)REG_ADDR_DMA0CNT)
-#define REG_DMA0CNT_L   (*(vu16 *)REG_ADDR_DMA0CNT_L)
-#define REG_DMA0CNT_H   (*(vu16 *)REG_ADDR_DMA0CNT_H)
+#define REG_DMA0SAD     (*(volatile uintptr_t *)REG_ADDR_DMA0SAD)
+#define REG_DMA0DAD     (*(volatile uintptr_t *)REG_ADDR_DMA0DAD)
+#define REG_DMA0CNT     (*(reg_u32 *)REG_ADDR_DMA0CNT)
+#define REG_DMA0CNT_L   (*(reg_u16 *)REG_ADDR_DMA0CNT_L)
+#define REG_DMA0CNT_H   (*(reg_u16 *)REG_ADDR_DMA0CNT_H)
 
-#define REG_DMA1SAD     (*(vu32 *)REG_ADDR_DMA1SAD)
-#define REG_DMA1DAD     (*(vu32 *)REG_ADDR_DMA1DAD)
-#define REG_DMA1CNT     (*(vu32 *)REG_ADDR_DMA1CNT)
-#define REG_DMA1CNT_L   (*(vu16 *)REG_ADDR_DMA1CNT_L)
-#define REG_DMA1CNT_H   (*(vu16 *)REG_ADDR_DMA1CNT_H)
+#define REG_DMA1SAD     (*(volatile uintptr_t *)REG_ADDR_DMA1SAD)
+#define REG_DMA1DAD     (*(volatile uintptr_t *)REG_ADDR_DMA1DAD)
+#define REG_DMA1CNT     (*(reg_u32 *)REG_ADDR_DMA1CNT)
+#define REG_DMA1CNT_L   (*(reg_u16 *)REG_ADDR_DMA1CNT_L)
+#define REG_DMA1CNT_H   (*(reg_u16 *)REG_ADDR_DMA1CNT_H)
 
-#define REG_DMA2SAD     (*(vu32 *)REG_ADDR_DMA2SAD)
-#define REG_DMA2DAD     (*(vu32 *)REG_ADDR_DMA2DAD)
-#define REG_DMA2CNT     (*(vu32 *)REG_ADDR_DMA2CNT)
-#define REG_DMA2CNT_L   (*(vu16 *)REG_ADDR_DMA2CNT_L)
-#define REG_DMA2CNT_H   (*(vu16 *)REG_ADDR_DMA2CNT_H)
+#define REG_DMA2SAD     (*(volatile uintptr_t *)REG_ADDR_DMA2SAD)
+#define REG_DMA2DAD     (*(volatile uintptr_t *)REG_ADDR_DMA2DAD)
+#define REG_DMA2CNT     (*(reg_u32 *)REG_ADDR_DMA2CNT)
+#define REG_DMA2CNT_L   (*(reg_u16 *)REG_ADDR_DMA2CNT_L)
+#define REG_DMA2CNT_H   (*(reg_u16 *)REG_ADDR_DMA2CNT_H)
 
-#define REG_DMA3SAD     (*(vu32 *)REG_ADDR_DMA3SAD)
-#define REG_DMA3DAD     (*(vu32 *)REG_ADDR_DMA3DAD)
-#define REG_DMA3CNT     (*(vu32 *)REG_ADDR_DMA3CNT)
-#define REG_DMA3CNT_L   (*(vu16 *)REG_ADDR_DMA3CNT_L)
-#define REG_DMA3CNT_H   (*(vu16 *)REG_ADDR_DMA3CNT_H)
+#define REG_DMA3SAD     (*(volatile uintptr_t *)REG_ADDR_DMA3SAD)
+#define REG_DMA3DAD     (*(volatile uintptr_t *)REG_ADDR_DMA3DAD)
+#define REG_DMA3CNT     (*(reg_u32 *)REG_ADDR_DMA3CNT)
+#define REG_DMA3CNT_L   (*(reg_u16 *)REG_ADDR_DMA3CNT_L)
+#define REG_DMA3CNT_H   (*(reg_u16 *)REG_ADDR_DMA3CNT_H)
 
-#define REG_TMCNT(n)    (*(vu16 *)(REG_ADDR_TMCNT + ((n) * 4)))
-#define REG_TM0CNT      (*(vu32 *)REG_ADDR_TM0CNT)
-#define REG_TM0CNT_L    (*(vu16 *)REG_ADDR_TM0CNT_L)
-#define REG_TM0CNT_H    (*(vu16 *)REG_ADDR_TM0CNT_H)
-#define REG_TM1CNT      (*(vu32 *)REG_ADDR_TM1CNT)
-#define REG_TM1CNT_L    (*(vu16 *)REG_ADDR_TM1CNT_L)
-#define REG_TM1CNT_H    (*(vu16 *)REG_ADDR_TM1CNT_H)
-#define REG_TM2CNT      (*(vu32 *)REG_ADDR_TM2CNT)
-#define REG_TM2CNT_L    (*(vu16 *)REG_ADDR_TM2CNT_L)
-#define REG_TM2CNT_H    (*(vu16 *)REG_ADDR_TM2CNT_H)
-#define REG_TM3CNT      (*(vu32 *)REG_ADDR_TM3CNT)
-#define REG_TM3CNT_L    (*(vu16 *)REG_ADDR_TM3CNT_L)
-#define REG_TM3CNT_H    (*(vu16 *)REG_ADDR_TM3CNT_H)
+#define REG_TMCNT(n)    (*(reg_u16 *)(REG_ADDR_TMCNT + ((n) * 4)))
+#define REG_TM0CNT      (*(reg_u32 *)REG_ADDR_TM0CNT)
+#define REG_TM0CNT_L    (*(reg_u16 *)REG_ADDR_TM0CNT_L)
+#define REG_TM0CNT_H    (*(reg_u16 *)REG_ADDR_TM0CNT_H)
+#define REG_TM1CNT      (*(reg_u32 *)REG_ADDR_TM1CNT)
+#define REG_TM1CNT_L    (*(reg_u16 *)REG_ADDR_TM1CNT_L)
+#define REG_TM1CNT_H    (*(reg_u16 *)REG_ADDR_TM1CNT_H)
+#define REG_TM2CNT      (*(reg_u32 *)REG_ADDR_TM2CNT)
+#define REG_TM2CNT_L    (*(reg_u16 *)REG_ADDR_TM2CNT_L)
+#define REG_TM2CNT_H    (*(reg_u16 *)REG_ADDR_TM2CNT_H)
+#define REG_TM3CNT      (*(reg_u32 *)REG_ADDR_TM3CNT)
+#define REG_TM3CNT_L    (*(reg_u16 *)REG_ADDR_TM3CNT_L)
+#define REG_TM3CNT_H    (*(reg_u16 *)REG_ADDR_TM3CNT_H)
 
-#define REG_SIOCNT      (*(vu16 *)REG_ADDR_SIOCNT)
-#define REG_SIODATA8    (*(vu16 *)REG_ADDR_SIODATA8)
-#define REG_SIODATA32   (*(vu32 *)REG_ADDR_SIODATA32)
-#define REG_SIOMLT_SEND (*(vu16 *)REG_ADDR_SIOMLT_SEND)
-#define REG_SIOMLT_RECV (*(vu64 *)REG_ADDR_SIOMLT_RECV)
-#define REG_SIOMULTI0   (*(vu16 *)REG_ADDR_SIOMULTI0)
-#define REG_SIOMULTI1   (*(vu16 *)REG_ADDR_SIOMULTI1)
-#define REG_SIOMULTI2   (*(vu16 *)REG_ADDR_SIOMULTI2)
-#define REG_SIOMULTI3   (*(vu16 *)REG_ADDR_SIOMULTI3)
+#define REG_SIOCNT      (*(reg_u16 *)REG_ADDR_SIOCNT)
+#define REG_SIOCNT_32   (*(reg_u32 *)REG_ADDR_SIOCNT)
+#define REG_SIODATA8    (*(reg_u16 *)REG_ADDR_SIODATA8)
+#define REG_SIODATA32   (*(reg_u32 *)REG_ADDR_SIODATA32)
+#define REG_SIOMLT_SEND (*(reg_u16 *)REG_ADDR_SIOMLT_SEND)
+#define REG_SIOMLT_RECV (*(reg_u64 *)REG_ADDR_SIOMLT_RECV)
+#define REG_SIOMULTI0   (*(reg_u16 *)REG_ADDR_SIOMULTI0)
+#define REG_SIOMULTI1   (*(reg_u16 *)REG_ADDR_SIOMULTI1)
+#define REG_SIOMULTI2   (*(reg_u16 *)REG_ADDR_SIOMULTI2)
+#define REG_SIOMULTI3   (*(reg_u16 *)REG_ADDR_SIOMULTI3)
 
-#define REG_KEYINPUT    (*(vu16 *)REG_ADDR_KEYINPUT)
-#define REG_KEYCNT      (*(vu16 *)REG_ADDR_KEYCNT)
+#define REG_KEYINPUT    (*(reg_u16 *)REG_ADDR_KEYINPUT)
+#define REG_KEYCNT      (*(reg_u16 *)REG_ADDR_KEYCNT)
 
-#define REG_RCNT        (*(vu16 *)REG_ADDR_RCNT)
+#define REG_RCNT        (*(reg_u16 *)REG_ADDR_RCNT)
 
-#define REG_IME         (*(vu16 *)REG_ADDR_IME)
-#define REG_IE          (*(vu16 *)REG_ADDR_IE)
-#define REG_IF          (*(vu16 *)REG_ADDR_IF)
+#define REG_IME         (*(reg_u16 *)REG_ADDR_IME)
+#define REG_IE          (*(reg_u16 *)REG_ADDR_IE)
+#define REG_IF          (*(reg_u16 *)REG_ADDR_IF)
 
-#define REG_WAITCNT     (*(vu16 *)REG_ADDR_WAITCNT)
+#define REG_WAITCNT     (*(reg_u16 *)REG_ADDR_WAITCNT)
 
 // I/O register fields
 
@@ -526,12 +570,21 @@
 #define DISPSTAT_VCOUNT_INTR 0x0020 // V-Count interrupt enabled
 
 // BGCNT
-#define BGCNT_PRIORITY(n)          (n) // Values 0 - 3. Lower priority BGs will be drawn on top of higher priority BGs.
-#define BGCNT_CHARBASE(n)   ((n) << 2) // Values 0 - 3. Base block for tile pixel data.
+// Values 0 - 3. Lower priority BGs will be drawn on top of higher priority BGs.
+#define BGCNT_PRIORITY(n)          (n)
+// Values 0 - 3. Base block for tile pixel data.
+// Target pointer: BG_CHAR_ADDR(n)
+#define BGCNT_CHARBASE(n)   ((n) << 2)
 #define BGCNT_MOSAIC            0x0040
 #define BGCNT_16COLOR           0x0000 // 4 bits per pixel
 #define BGCNT_256COLOR          0x0080 // 8 bits per pixel
 #define BGCNT_SCREENBASE(n) ((n) << 8) // Values 0 - 31. Base block for tile map.
+#if !WIDESCREEN_HACK
+#define BGCNT_SCREENBASE_MASK   0x1F00
+#else
+// Luckily BGCNT_WRAP is not used with text-mode backgrounds, which stage maps are.
+#define BGCNT_SCREENBASE_MASK   0x3F00
+#endif
 #define BGCNT_WRAP              0x2000 // Only affects affine BGs. Text BGs wrap by default.
 #define BGCNT_TXT256x256        0x0000 // Internal screen size size of text mode BG in pixels.
 #define BGCNT_TXT512x256        0x4000
@@ -541,6 +594,42 @@
 #define BGCNT_AFF256x256        0x4000
 #define BGCNT_AFF512x512        0x8000
 #define BGCNT_AFF1024x1024      0xC000
+#define BGCNT_TXTAFF_MASK       0xC000
+
+// WININ/OUT
+#define WININ_WIN0_BG0      (1 << 0)
+#define WININ_WIN0_BG1      (1 << 1)
+#define WININ_WIN0_BG2      (1 << 2)
+#define WININ_WIN0_BG3      (1 << 3)
+#define WININ_WIN0_BG_ALL   (WININ_WIN0_BG0 | WININ_WIN0_BG1 | WININ_WIN0_BG2 | WININ_WIN0_BG3)
+#define WININ_WIN0_OBJ      (1 << 4)
+#define WININ_WIN0_CLR      (1 << 5)
+#define WININ_WIN0_ALL      (WININ_WIN0_BG_ALL | WININ_WIN0_OBJ | WININ_WIN0_CLR)
+#define WININ_WIN1_BG0      (1 << 8)
+#define WININ_WIN1_BG1      (1 << 9)
+#define WININ_WIN1_BG2      (1 << 10)
+#define WININ_WIN1_BG3      (1 << 11)
+#define WININ_WIN1_BG_ALL   (WININ_WIN1_BG0 | WININ_WIN1_BG1 | WININ_WIN1_BG2 | WININ_WIN1_BG3)
+#define WININ_WIN1_OBJ      (1 << 12)
+#define WININ_WIN1_CLR      (1 << 13)
+#define WININ_WIN1_ALL      (WININ_WIN1_BG_ALL | WININ_WIN1_OBJ | WININ_WIN1_CLR)
+
+#define WINOUT_WIN01_BG0    (1 << 0)
+#define WINOUT_WIN01_BG1    (1 << 1)
+#define WINOUT_WIN01_BG2    (1 << 2)
+#define WINOUT_WIN01_BG3    (1 << 3)
+#define WINOUT_WIN01_BG_ALL (WINOUT_WIN01_BG0 | WINOUT_WIN01_BG1 | WINOUT_WIN01_BG2 | WINOUT_WIN01_BG3)
+#define WINOUT_WIN01_OBJ    (1 << 4)
+#define WINOUT_WIN01_CLR    (1 << 5)
+#define WINOUT_WIN01_ALL    (WINOUT_WIN01_BG_ALL | WINOUT_WIN01_OBJ | WINOUT_WIN01_CLR)
+#define WINOUT_WINOBJ_BG0   (1 << 8)
+#define WINOUT_WINOBJ_BG1   (1 << 9)
+#define WINOUT_WINOBJ_BG2   (1 << 10)
+#define WINOUT_WINOBJ_BG3   (1 << 11)
+#define WINOUT_WINOBJ_BG_ALL (WINOUT_WINOBJ_BG0 | WINOUT_WINOBJ_BG1 | WINOUT_WINOBJ_BG2 | WINOUT_WINOBJ_BG3)
+#define WINOUT_WINOBJ_OBJ   (1 << 12)
+#define WINOUT_WINOBJ_CLR   (1 << 13)
+#define WINOUT_WINOBJ_ALL   (WINOUT_WINOBJ_BG_ALL | WINOUT_WINOBJ_OBJ | WINOUT_WINOBJ_CLR)
 
 // BLDCNT
 // Bits 0-5 select layers for the 1st target
@@ -550,6 +639,7 @@
 #define BLDCNT_TGT1_BG3      (1 << 3)
 #define BLDCNT_TGT1_OBJ      (1 << 4)
 #define BLDCNT_TGT1_BD       (1 << 5)
+#define BLDCNT_TGT1_ALL      (BLDCNT_TGT1_BG0 | BLDCNT_TGT1_BG1 | BLDCNT_TGT1_BG2 | BLDCNT_TGT1_BG3 | BLDCNT_TGT1_OBJ | BLDCNT_TGT1_BD)
 // Bits 6-7 select the special effect
 #define BLDCNT_EFFECT_NONE      (0 << 6)   // no special effect
 #define BLDCNT_EFFECT_BLEND     (1 << 6)   // 1st+2nd targets mixed (controlled by BLDALPHA)
@@ -562,6 +652,7 @@
 #define BLDCNT_TGT2_BG3      (1 << 11)
 #define BLDCNT_TGT2_OBJ      (1 << 12)
 #define BLDCNT_TGT2_BD       (1 << 13)
+#define BLDCNT_TGT2_ALL      (BLDCNT_TGT2_BG0 | BLDCNT_TGT2_BG1 | BLDCNT_TGT2_BG2 | BLDCNT_TGT2_BG3 | BLDCNT_TGT2_OBJ | BLDCNT_TGT2_BD)
 
 // BLDALPHA
 #define BLDALPHA_BLEND(target1, target2) (((target2) << 8) | (target1))
@@ -686,6 +777,8 @@
 #define KEY_OR_INTR     0x0000
 #define KEY_AND_INTR    0x8000
 #define DPAD_ANY        0x00F0
+#define DPAD_SIDEWAYS   (DPAD_LEFT | DPAD_RIGHT)
+#define DPAD_VERTICAL   (DPAD_DOWN | DPAD_UP)
 #define JOY_EXCL_DPAD   0x030F
 
 // interrupt flags

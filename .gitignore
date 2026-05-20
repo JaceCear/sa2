@@ -2,6 +2,10 @@
 Thumbs.db
 ehthumbs.db
 
+# Visual Studio folder
+.vs
+*.pdb
+
 # Folder config file
 Desktop.ini
 
@@ -55,18 +59,39 @@ Temporary Items
 *.elf
 *.map
 *.bin
-!data/**/*.bin
+
+*.a
 
 *.hex
 *.o
 *.dump
 build
 tools/agbcc
-sound/songs/midi/*.s
-/ctx.c
+# **/sound/*/songs/midi/*.s
+**/songs/midi/*.s
+**/ctx.c
+**/ctx.h
 reports
 .vscode/*.log
 *.gbapal
 *.lz
+*.rl
 *.gba
-maps
+./maps
+*.4bpp
+*.8bpp
+libagbsyscall/*.s
+
+!data/*/maps/*/*/tilemaps/*/*.bin
+*.exe
+*.dll
+*.sdl
+*.iso
+
+# PSP build outputs
+EBOOT.PBP
+PARAM.SFO
+sa2_debug.log
+
+# third party deps
+/ext

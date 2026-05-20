@@ -28,18 +28,43 @@ def read_s32(rom: BufferedReader):
 def format_hex(val):
     return f"0x{hex(val)[2:].upper()}"
 
-with open('baserom.gba', 'rb') as rom:
+with open('rom_data.bin', 'rb') as rom:
     rom.seek(address)
-    for i in range(length // 2):
-        print(f"{read_u16(rom)}, ", end="")
-    # for i in range(length // 4 // 2):
+    # for i in range(length // 4):
+    #     print(f"Q({read_s32(rom) / 256}), ")
+    # for i in range(length // 2):
+    #     print(f"{read_u16(rom)}, ")
+    # for i in range(length // 8):
+    #     print(f"{read_u8(rom)}, ")
+    # for i in range(length // 4):
     #     print("{ ", end="")
     #     for j in range(2):
-    #         print(f"{read_s32(rom)}" + ", ", end="")
+    #         print(f"{(read_u16(rom))}" + ", ", end="")
     #     print("},")
+    for i in range(length // 4):
+        print("{ ", end="")
+        # for j in range(2):
+        print(f"{(read_u16(rom))}, {(read_u16(rom))}", end="")
+        print("},")
+    # for i in range(length // 4):
+    #     p = read_u32(rom)
+    #     idx = int((p - 0x80D859C) / (6 * 4))
+    #     print(f"gUnknown_080D859C[{idx}],")
 
     # print("{ ", end="")
     # for i in range(length):
-    #     print(str(read_u8(rom)) + ", ", end="")
+    #     print(str(read_s8(rom)) + ", ", end="")
     # print("},")
+    
+    # for i in range(length // 4):
+    #     print("{" + f" {read_u16(rom)}, {read_u8(rom)}, {read_u8(rom)} " + "},")
+    
+    # for i in range(length // 24):
+    #     print("{ ", end="")
+    #     for j in range(12):
+    #         print(f"Q({(read_s16(rom)) / 256})" + (", " if j != 11 else ""), end="")
+    #     print("},")
 
+
+    # for i in range(length // 4):
+    #     print(f"void sub_{hex(read_s32(rom) - 1).split('x')[1].upper()}(EggFrog*); ")

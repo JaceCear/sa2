@@ -1,0 +1,175 @@
+gNumMusicPlayers = 4;
+gMaxLines = 0;
+
+SECTIONS {
+    . = 0x03000000;
+    IWRAM (NOLOAD) :
+    ALIGN(4)
+    {
+        build/collect_rings/src/sa2/lib/m4a/m4a.o(.bss.code);
+        build/collect_rings/src/sa2/game/shared/stage/terrain_collision.o(.bss);
+        /**** common ****/
+        . = ALIGN(16); 
+        build/collect_rings/src/sa2/multi_sio.o(.data);
+        build/collect_rings/src/sa2/sio32_multi_load.o(COMMON);
+        build/collect_rings/src/sa2/core.o(.data);
+        build/collect_rings/src/sa2/game/globals.o(.data);
+        build/collect_rings/src/sa2/game/sa2/collect_rings/time_display.o(.data);
+        build/collect_rings/src/sa2/game/shared/stage/mp_player.o(.data);
+        build/collect_rings/src/sa2/game/sa2/stage/mp_attack_2_effect.o(.data);
+        build/collect_rings/src/sa2/game/shared/stage/camera.o(.data);
+        build/collect_rings/src/sa2/game/shared/stage/terrain_collision.o(.data);
+        build/collect_rings/src/sa2/game/shared/stage/player.o(.data);
+        build/collect_rings/src/sa2/game/shared/stage/rings_scatter.o(.data);
+        build/collect_rings/src/sa2/game/sa2/stage/player_controls.o(.data);
+        build/collect_rings/src/sa2/game/shared/stage/stage.o(.data);
+        build/collect_rings/src/sa2/game/dummy_task.o(.data);
+        iwram_end = .;
+    }
+
+    . = 0x20000C0;
+    ROM :
+    ALIGN(4) {
+        build/collect_rings/src/sa2/rom_header.o(.text);
+        build/collect_rings/src/sa2/crt0.o(.text);
+        build/collect_rings/src/sa2/multi_sio_asm.o(.text);
+        build/collect_rings/src/sa2/multi_sio.o(.text);
+        build/collect_rings/src/sa2/sio32_multi_load.o(.text);
+        build/collect_rings/src/sa2/core.o(.text);
+        build/collect_rings/src/sa2/main.o(.text);
+        build/collect_rings/src/sa2/task.o(.text);
+        build/collect_rings/src/sa2/background.o(.text);
+        build/collect_rings/src/sa2/sprite.o(.text);
+        build/collect_rings/src/sa2/malloc_vram.o(.text);
+        build/collect_rings/src/sa2/bg_triangles.o(.text);
+        build/collect_rings/src/sa2/game/shared/stage/mp_event_mgr.o(.text);
+        build/collect_rings/src/sa2/game/shared/stage/mp_event_recv_mgr.o(.text);
+        build/collect_rings/src/sa2/game/shared/collect_rings/results.o(.text);
+        build/collect_rings/src/sa2/game/shared/stage/entities_manager.o(.text);
+        build/collect_rings/src/sa2/game/shared/stage/collision_3.o(.text);
+        build/collect_rings/src/sa2/game/shared/stage/collision_1.o(.text);
+        build/collect_rings/src/sa2/game/shared/stage/collision_2.o(.text);
+        build/collect_rings/src/sa2/game/sa2/stage/mystery_itembox.o(.text);
+        build/collect_rings/src/sa2/game/shared/stage/rings_manager.o(.text);
+        build/collect_rings/src/sa2/game/sa2/collect_rings/time_display.o(.text);
+        build/collect_rings/src/sa2/game/shared/stage/mp_indicators.o(.text);
+        build/collect_rings/src/sa2/game/shared/stage/mp_player.o(.text);
+        build/collect_rings/src/sa2/game/shared/stage/mp_finish.o(.text);
+        build/collect_rings/src/sa2/game/sa2/stage/interactables/leaf_forest/toggle_player_layer.o(.text);
+        build/collect_rings/src/sa2/game/sa2/stage/interactables/spring.o(.text);
+        build/collect_rings/src/sa2/game/sa2/stage/interactables/ramp.o(.text);
+        build/collect_rings/src/sa2/game/sa2/stage/interactables/leaf_forest/spikes.o(.text);
+        build/collect_rings/src/sa2/game/sa2/stage/interactables/grind_rail.o(.text);
+        build/collect_rings/src/sa2/game/sa2/stage/interactables/collect_rings_lap_trigger.o(.text);
+        build/collect_rings/src/sa2/game/shared/stage/dust_cloud.o(.text);
+        build/collect_rings/src/sa2/game/shared/stage/collect_ring_effect.o(.text);
+        build/collect_rings/src/sa2/game/sa2/stage/mp_attack_2_effect.o(.text);
+        build/collect_rings/src/sa2/game/shared/stage/camera.o(.text);
+        build/collect_rings/src/sa2/game/shared/stage/terrain_collision.o(.text);
+        build/collect_rings/src/sa2/game/shared/stage/player.o(.text);
+        build/collect_rings/src/sa2/game/shared/stage/rings_scatter.o(.text);
+        build/collect_rings/src/sa2/game/sa2/stage/player_controls.o(.text);
+        build/collect_rings/src/sa2/game/shared/stage/stage.o(.text);
+        build/collect_rings/src/sa2/game/sa2/collect_rings/singlepak_connection.o(.text);
+        build/collect_rings/src/sa2/game/game.o(.text);
+        build/collect_rings/src/sa2/game/dummy_task.o(.text);
+        build/collect_rings/src/sa2/lib/m4a/m4a0.o(.text);
+        build/collect_rings/src/sa2/lib/m4a/m4a.o(.text);
+        *libagbsyscall.a:ArcTan2.o(.text);
+        *libagbsyscall.a:CpuFastSet.o(.text);
+        *libagbsyscall.a:CpuSet.o(.text);
+        *libagbsyscall.a:Div.o(.text);
+        *libagbsyscall.a:Mod.o(.text);
+        *libagbsyscall.a:RLUnCompWram.o(.text);
+        *libagbsyscall.a:VBlankIntrWait.o(.text);
+        *libgcc.a:_call_via_rX.o(.text);
+        *libgcc.a:_divsi3.o(.text);
+        *libgcc.a:_dvmd_tls.o(.text);
+        *libgcc.a:_umodsi3.o(.text);
+        *libc.a:memcpy.o(.text);
+        *libc.a:memset.o(.text);
+
+        /* Data */
+        build/collect_rings/src/sa2/multi_sio.o(.rodata);
+        build/collect_rings/src/sa2/sio32_multi_load.o(.rodata);
+        build/collect_rings/src/sa2/core.o(.rodata);
+        build/collect_rings/src/sa2/background.o(.rodata);
+        build/collect_rings/src/sa2/trig.o(.rodata);
+        build/collect_rings/src/sa2/sprite.o(.rodata);
+        build/collect_rings/src/sa2/game/shared/stage/mp_event_mgr.o(.rodata);
+        build/collect_rings/src/sa2/game/shared/stage/entities_manager.o(.rodata);
+        build/collect_rings/src/sa2/game/sa2/stage/mystery_itembox.o(.rodata);
+        build/collect_rings/src/sa2/game/sa2/collect_rings/time_display.o(.rodata);
+        build/collect_rings/src/sa2/game/shared/stage/mp_player.o(.rodata);
+        build/collect_rings/src/sa2/game/shared/stage/mp_finish.o(.rodata);
+        build/collect_rings/src/sa2/game/sa2/stage/interactables/spring.o(.rodata);
+        build/collect_rings/src/sa2/game/sa2/stage/interactables/leaf_forest/spikes.o(.rodata);
+        build/collect_rings/src/sa2/game/shared/stage/camera.o(.rodata);
+        build/collect_rings/src/sa2/game/shared/stage/player.o(.rodata);
+        build/collect_rings/src/sa2/lib/m4a/m4a_tables.o(.rodata);
+        build/collect_rings/data/sound_data.o(.rodata);
+
+        /* Songs */
+        build/collect_rings/sound/sa2/songs/midi/mus_vs_select_pak_mode.o(.rodata);
+        build/collect_rings/sound/sa2/songs/midi/mus_vs_2.o(.rodata);
+        build/collect_rings/sound/sa2/songs/midi/mus_vs_lobby.o(.rodata);
+        build/collect_rings/sound/sa2/songs/midi/mus_fanfare.o(.rodata);
+        build/collect_rings/sound/sa2/songs/midi/mus_vs_3.o(.rodata);
+        build/collect_rings/sound/sa2/songs/midi/se_select.o(.rodata);
+        build/collect_rings/sound/sa2/songs/midi/se_spin_attack__collect_rings.o(.rodata);
+        build/collect_rings/sound/sa2/songs/midi/se_spin_dash_release.o(.rodata);
+        build/collect_rings/sound/sa2/songs/midi/se_brake__collect_rings.o(.rodata);
+        build/collect_rings/sound/sa2/songs/midi/se_jump__collect_rings.o(.rodata);
+        build/collect_rings/sound/sa2/songs/midi/se_ring_copy.o(.rodata);
+        build/collect_rings/sound/sa2/songs/midi/se_rings_lost__collect_rings.o(.rodata);
+        build/collect_rings/sound/sa2/songs/midi/se_life_lost.o(.rodata);
+        build/collect_rings/sound/sa2/songs/midi/se_time_up.o(.rodata);
+        build/collect_rings/sound/sa2/songs/midi/se_itembox_2.o(.rodata);
+        build/collect_rings/sound/sa2/songs/midi/se_spring__collect_rings.o(.rodata);
+        build/collect_rings/sound/sa2/songs/midi/se_spikes.o(.rodata);
+        build/collect_rings/sound/sa2/songs/midi/se_alarm_1.o(.rodata);
+        build/collect_rings/sound/sa2/songs/midi/se_216__collect_rings.o(.rodata);
+        build/collect_rings/sound/sa2/songs/midi/se_springy_spring__collect_rings.o(.rodata);
+
+        build/collect_rings/sound/sa2/songs/midi/se_276.o(.rodata);
+        build/collect_rings/sound/sa2/songs/midi/se_grinding.o(.rodata);
+    }
+
+    . = 0x0201cd30;
+    EWRAM (NOLOAD) :
+    ALIGN(4)
+    {
+        build/collect_rings/src/sa2/lib/m4a/m4a.o(ewram_data);
+    }
+
+    /* DWARF debug sections.
+       Symbols in the DWARF debugging sections are relative to the beginning
+       of the section so we begin them at 0.  */
+
+    /* DWARF 1 */
+    .debug          0 : { *(.debug) }
+    .line           0 : { *(.line) }
+
+    /* GNU DWARF 1 extensions */
+    .debug_srcinfo  0 : { *(.debug_srcinfo) }
+    .debug_sfnames  0 : { *(.debug_sfnames) }
+
+    /* DWARF 1.1 and DWARF 2 */
+    .debug_aranges  0 : { *(.debug_aranges) }
+    .debug_pubnames 0 : { *(.debug_pubnames) }
+
+    /* DWARF 2 */
+    .debug_info     0 : { *(.debug_info .gnu.linkonce.wi.*) }
+    .debug_abbrev   0 : { *(.debug_abbrev) }
+    .debug_line     0 : { *(.debug_line) }
+    .debug_frame    0 : { *(.debug_frame) }
+    .debug_str      0 : { *(.debug_str) }
+    .debug_loc      0 : { *(.debug_loc) }
+    .debug_macinfo  0 : { *(.debug_macinfo) }
+
+    /* Discard everything not specifically mentioned above. */
+    /DISCARD/ :
+    {
+        *(*);
+    }
+}

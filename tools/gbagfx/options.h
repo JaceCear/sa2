@@ -8,10 +8,10 @@
 struct GbaToPngOptions {
     char *paletteFilePath;
     int bitDepth;
-    bool hasTransparency;
     int width;
     int metatileWidth;
     int metatileHeight;
+    bool hasTransparency;
 };
 
 struct PngToGbaOptions {
@@ -19,6 +19,8 @@ struct PngToGbaOptions {
     int bitDepth;
     int metatileWidth;
     int metatileHeight;
+    bool ignoreTrailingTiles;
+    bool splitIntoOamShapes;
 };
 
 #endif // OPTIONS_H

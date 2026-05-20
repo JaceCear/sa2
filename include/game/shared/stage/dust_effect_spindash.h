@@ -1,0 +1,6 @@
+#ifndef GUARD_SPINDASH_DUST_CLOUD
+#define GUARD_SPINDASH_DUST_CLOUD
+
+Task *CreateSpindashDustEffect();
+
+#endif // GUARD_SPINDASH_DUST_CLOUD

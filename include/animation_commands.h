@@ -6,6 +6,8 @@
 
 #define AnimCommandSizeInWords(_structType) ((sizeof(_structType)) / sizeof(s32))
 
+typedef AnimCmdResult (*AnimationCommandFunc)(void *cursor, Sprite *sprite);
+
 typedef struct {
     /* 0x00 */ s32 cmdId; // -2
 
@@ -44,8 +46,8 @@ typedef struct {
 typedef struct {
     /* 0x00 */ s32 cmdId; // -6
 
-    /* 0x04 */ Sprite_UNK28 unk4;
-} ACmd_6;
+    /* 0x04 */ Hitbox hitbox;
+} ACmd_Hitbox;
 
 typedef struct {
     /* 0x00 */ s32 cmdId; // -7
@@ -65,7 +67,7 @@ typedef struct {
     /* 0x00 */ s32 cmdId; // -9
 
     /* 0x04 */ AnimId animId;
-    /* 0x08 */ u16 variant;
+    /* 0x06 */ u16 variant;
 } ACmd_SetIdAndVariant;
 
 typedef struct {
@@ -79,14 +81,42 @@ typedef struct {
 typedef struct {
     /* 0x00 */ s32 cmdId; // -11
 
-    /* 0x04 */ s32 unk4; // the logic of animCmd_11 suggests that only values of 0-3 make
-                         // sense here.
-} ACmd_11;
+    /* 0x04 */ s32 priority;
+} ACmd_SetSpritePriority;
 
 typedef struct {
     /* 0x00 */ s32 cmdId; // -12
 
-    /* 0x04 */ s32 unk4;
-} ACmd_12;
+    /* 0x04 */ s32 orderIndex;
+} ACmd_SetOamOrder;
+
+typedef struct {
+    // number of frames this will be displayed
+    s32 delay;
+
+    // frameId of this animation that should be displayed
+    s32 index;
+} ACmd_ShowFrame;
+
+typedef union {
+    s32 id;
+
+    ACmd_GetTiles tiles;
+    ACmd_GetPalette pal;
+    ACmd_JumpBack jump;
+    ACmd_4 end;
+    ACmd_PlaySoundEffect sfx;
+    ACmd_Hitbox _6;
+    ACmd_TranslateSprite translate;
+    ACmd_8 _8;
+    ACmd_SetIdAndVariant setAnimId;
+    ACmd_10 _10;
+    ACmd_SetSpritePriority _11;
+    ACmd_SetOamOrder setOamOrder;
+
+    ACmd_ShowFrame show;
+} ACmd;
+
+u32 Base10DigitsToHexNibbles(u16 num);
 
 #endif // GUARD_ANIMATION_COMMANDS_H

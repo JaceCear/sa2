@@ -2,38 +2,39 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
   pull_request_target:
 
 jobs:
   format:
-    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork || github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork}} 
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork || github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork}}
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout PR
-        if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target'}} 
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target'}}
         uses: actions/checkout@master
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Checkout
         if: ${{ github.event_name == 'push' }}
         uses: actions/checkout@master
-      
+
       - name: Install tools
         run: |
           sudo apt update && sudo apt install clang-format-13
-      
+
       - name: Check formatting
         run: |
           make check_format
 
-  build:
-    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork || github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork}} 
-    runs-on: ubuntu-22.04
+  build-sa2-gba:
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork || github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork}}
+    runs-on: ubuntu-24.04
+    name: Build SA2 GBA (USA)
     steps:
       - name: Checkout PR
-        if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target'}} 
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target'}}
         uses: actions/checkout@master
         with:
           ref: ${{ github.event.pull_request.head.sha }}
@@ -41,7 +42,197 @@ jobs:
       - name: Checkout
         if: ${{ github.event_name == 'push' }}
         uses: actions/checkout@master
-       
+
+      - name: Checkout agbcc
+        uses: actions/checkout@master
+        with:
+          path: agbcc
+          repository: SAT-R/agbcc
+
+      - name: Install tools
+        run: |
+          sudo apt update && sudo apt install gcc-arm-none-eabi binutils-arm-none-eabi libpng-dev
+          python3 -m pip install gitpython
+
+      - name: Install agbcc
+        run: |
+          ./build.sh
+          ./install.sh ../
+        working-directory: agbcc
+
+      - name: Compare
+        run: make -j${nproc}
+
+      - name: Progress
+        run: |
+          python3 scripts/progress.py text
+
+      - name: Collect Rings Progress
+        run: |
+          cd multi_boot/roms/collect_rings && python3 ../../../scripts/progress.py -f collect_rings.map text
+
+      - name: Chao Garden Progress
+        run: |
+          cd chao_garden && python3 ../scripts/progress.py -f mb_chao_garden.map text
+
+      - name: Generate reports
+        run: |
+          mkdir -p gh-pages/reports
+          mkdir -p gh-pages/maps/sa2
+          python3 scripts/progress.py csv > gh-pages/reports/progress-sa2-nonmatching-latest.csv
+          python3 scripts/progress.py csv -m > gh-pages/reports/progress-sa2-matching-latest.csv
+          python3 scripts/progress.py shield-json > gh-pages/reports/progress-sa2-shield.json
+          python3 scripts/progress.py shield-json -m > gh-pages/reports/progress-sa2-shield-matching.json
+          echo "REPORTS_COMMIT_MSG=$( git log --format=%s ${GITHUB_SHA} )" >> $GITHUB_ENV
+          cp sa2.map gh-pages/maps/sa2/${GITHUB_SHA}.map
+
+      - name: Generate reports (Collect Rings)
+        run: |
+          cd multi_boot/roms/collect_rings
+          python3 ../../../scripts/progress.py csv -f collect_rings.map > ../../../gh-pages/reports/progress-collect_rings-nonmatching-latest.csv
+          python3 ../../../scripts/progress.py csv -m -f collect_rings.map > ../../../gh-pages/reports/progress-collect_rings-matching-latest.csv
+          python3 ../../../scripts/progress.py shield-json -f collect_rings.map > ../../../gh-pages/reports/progress-collect_rings-shield.json
+          python3 ../../../scripts/progress.py shield-json -m -f collect_rings.map > ../../../gh-pages/reports/progress-collect_rings-shield-matching.json
+
+      - name: Generate reports (Chao Garden)
+        run: |
+          cd chao_garden
+          python3 ../scripts/progress.py csv -f mb_chao_garden.map > ../gh-pages/reports/progress-mb_chao_garden-nonmatching-latest.csv
+          python3 ../scripts/progress.py csv -m -f mb_chao_garden.map > ../gh-pages/reports/progress-mb_chao_garden-matching-latest.csv
+          python3 ../scripts/progress.py shield-json -f mb_chao_garden.map > ../gh-pages/reports/progress-mb_chao_garden-shield.json
+          python3 ../scripts/progress.py shield-json -m -f mb_chao_garden.map > ../gh-pages/reports/progress-mb_chao_garden-shield-matching.json
+
+      - name: Upload progress
+        if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v7
+        with:
+          path: |
+            gh-pages
+          name: sa2
+
+  build-sa1-gba:
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork || github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork}}
+    runs-on: ubuntu-22.04
+    name: Build SA1 GBA (Europe)
+    steps:
+      - name: Checkout PR
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target'}}
+        uses: actions/checkout@master
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Checkout
+        if: ${{ github.event_name == 'push' }}
+        uses: actions/checkout@master
+
+      - name: Checkout agbcc
+        uses: actions/checkout@master
+        with:
+          path: agbcc
+          repository: SAT-R/agbcc
+
+      - name: Install tools
+        run: |
+          sudo apt update && sudo apt install gcc-arm-none-eabi binutils-arm-none-eabi xorg-dev
+          python3 -m pip install gitpython
+        # build-essential, git, and libpng-dev are already installed
+        # gcc-arm-none-eabi is only needed for the modern build
+        # as an alternative to dkP
+
+      - name: Install agbcc
+        run: |
+          ./build.sh
+          ./install.sh ../
+        working-directory: agbcc
+
+      - name: Fetch assets
+        run: curl -o baserom_sa1.gba -u ${{ secrets.STORAGE_USERNAME }}:${{ secrets.STORAGE_PASSWORD }} ${{ secrets.STORAGE_BASE_URL }}/sa1/baserom.gba
+
+      - name: Compare
+        run: make sa1 -j${nproc}
+
+      - name: Progress
+        run: |
+          python3 scripts/progress.py -f sa1.map text
+
+      - name: Generate reports
+        run: |
+          mkdir -p gh-pages/reports
+          mkdir -p gh-pages/maps/sa1
+          python3 scripts/progress.py -f sa1.map csv >> gh-pages/reports/progress-sa1-nonmatching-latest.csv
+          python3 scripts/progress.py -f sa1.map csv -m >> gh-pages/reports/progress-sa1-matching-latest.csv
+          python3 scripts/progress.py -f sa1.map shield-json > gh-pages/reports/progress-sa1-shield.json
+          python3 scripts/progress.py -f sa1.map shield-json -m > gh-pages/reports/progress-sa1-shield-matching.json
+          echo "REPORTS_COMMIT_MSG=$( git log --format=%s ${GITHUB_SHA} )" >> $GITHUB_ENV
+          cp sa1.map gh-pages/maps/sa1/${GITHUB_SHA}.map
+
+      - name: Upload progress
+        if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v7
+        with:
+          path: |
+            gh-pages
+          name: sa1
+
+  publish-progress:
+    name: Publish progress
+    runs-on: ubuntu-24.04
+    needs: [build-sa2-gba, build-sa1-gba]
+    # Only able to run from repo pull requests (by maintainers, or on the main branch via push)
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout gh-pages
+        uses: actions/checkout@master
+        with:
+          path: gh-pages
+          ref: gh-pages
+      - name: Download progress
+        uses: actions/download-artifact@v7
+        with:
+          path: |
+            gh-pages
+          merge-multiple: true
+      - run: |
+          cat gh-pages/reports/progress-sa1-nonmatching-latest.csv >> gh-pages/reports/progress-sa1-nonmatching.csv
+          cat gh-pages/reports/progress-sa1-matching-latest.csv >> gh-pages/reports/progress-sa1-matching.csv
+          cat gh-pages/reports/progress-sa2-nonmatching-latest.csv >> gh-pages/reports/progress-sa2-nonmatching.csv
+          cat gh-pages/reports/progress-sa2-matching-latest.csv >> gh-pages/reports/progress-sa2-matching.csv
+          cat gh-pages/reports/progress-collect_rings-nonmatching-latest.csv >> gh-pages/reports/progress-collect_rings-nonmatching.csv
+          cat gh-pages/reports/progress-collect_rings-matching-latest.csv >> gh-pages/reports/progress-collect_rings-matching.csv
+          cat gh-pages/reports/progress-mb_chao_garden-nonmatching-latest.csv >> gh-pages/reports/progress-mb_chao_garden-nonmatching.csv
+          cat gh-pages/reports/progress-mb_chao_garden-matching-latest.csv >> gh-pages/reports/progress-mb_chao_garden-matching.csv
+          cd gh-pages
+          git status
+      - name: Publish reports
+        if: ${{ github.event_name == 'push' }}
+        uses: EndBug/add-and-commit@v7
+        with:
+          branch: gh-pages
+          cwd: "./gh-pages"
+          add: "reports maps"
+          message: ${{ env.REPORTS_COMMIT_MSG }}
+
+  build-gba-variants:
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork || github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork}}
+    runs-on: ubuntu-24.04
+    name: Build GBA (${{ matrix.variant }})
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: ["europe", "japan", "japan_vc", "usa_beta"]
+    steps:
+      - name: Checkout PR
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target'}}
+        uses: actions/checkout@master
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Checkout
+        if: ${{ github.event_name == 'push' }}
+        uses: actions/checkout@master
+
       - name: Checkout gh-pages
         if: ${{ github.event_name == 'push' }}
         uses: actions/checkout@master
@@ -53,66 +244,144 @@ jobs:
         uses: actions/checkout@master
         with:
           path: agbcc
-          repository: pret/agbcc
+          repository: SAT-R/agbcc
 
       - name: Install tools
         run: |
-          sudo apt update && sudo apt install gcc-arm-none-eabi binutils-arm-none-eabi
-          python3 -m pip install gitpython
-        # build-essential, git, and libpng-dev are already installed
-        # gcc-arm-none-eabi is only needed for the modern build
-        # as an alternative to dkP
+          sudo apt update && sudo apt install binutils-arm-none-eabi gcc-arm-none-eabi libpng-dev
 
       - name: Install agbcc
         run: |
           ./build.sh
           ./install.sh ../
         working-directory: agbcc
-      
-      - name: Fetch assets
-        run: curl -o baserom.gba -u ${{ secrets.STORAGE_USERNAME }}:${{ secrets.STORAGE_PASSWORD }} ${{ secrets.STORAGE_URL }}/baserom.gba
 
       - name: Compare
-        run: make -j${nproc}
+        run: make ${{ matrix.variant }} -j${nproc}
 
-      - name: Progress
-        run: |
-          python3 scripts/progress.py text
-
-      - name: Generate reports
-        if: ${{ github.event_name == 'push' }}
-        run: |
-          mkdir -p gh-pages/reports
-          python3 scripts/progress.py csv >> gh-pages/reports/progress-sa2-nonmatching.csv
-          python3 scripts/progress.py csv -m >> gh-pages/reports/progress-sa2-matching.csv
-          python3 scripts/progress.py shield-json > gh-pages/reports/progress-sa2-shield.json
-          echo "REPORTS_COMMIT_MSG=$( git log --format=%s ${GITHUB_SHA} )" >> $GITHUB_ENV
-
-      - name: Update reports
-        if: ${{ github.event_name == 'push' }}
-        uses: EndBug/add-and-commit@v7
+  ports:
+    strategy:
+      fail-fast: false
+      matrix:
+        game: ["sa1", "sa2"]
+        platform: ["sdl", "sdl_win32", "sdl_psp", "win32", "ps2"]
+        os: ["ubuntu-24.04", "macos-15"]
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork || github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork}}
+    runs-on: ${{ matrix.os }}
+    name: Build ${{ matrix.game }} ${{ matrix.platform }} (${{ matrix.os }})
+    steps:
+      - name: Checkout PR
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target'}}
+        uses: actions/checkout@master
         with:
-          branch: gh-pages
-          cwd: "./gh-pages"
-          add: "reports"
-          message: ${{ env.REPORTS_COMMIT_MSG }}
+          ref: ${{ github.event.pull_request.head.sha }}
 
-      # - name: Modern
-      #   env:
-      #     MODERN: 1
-      #     COMPARE: 0
-      #   run: make -j${nproc} all
+      - name: Checkout
+        if: ${{ github.event_name == 'push' }}
+        uses: actions/checkout@master
+      - name: Fetch assets
+        run: curl -o baserom_${{ matrix.game }}.gba -u ${{ secrets.STORAGE_USERNAME }}:${{ secrets.STORAGE_PASSWORD }} ${{ secrets.STORAGE_BASE_URL }}/${{ matrix.game }}/baserom.gba
 
-      # - name: Move symfiles
-      #   if: ${{ github.event_name == 'push' }}
-      #   run: |
-      #     cp -v *.sym symbols/
-      #     echo "SYMBOLS_COMMIT_MSG=$( git log --format=%s ${GITHUB_SHA} )" >> $GITHUB_ENV
-      # - name: Update symfiles
-      #   if: ${{ github.event_name == 'push' }}
-      #   uses: EndBug/add-and-commit@v7
-      #   with:
-      #     branch: symbols
-      #     cwd: "./symbols"
-      #     add: "*.sym"
-      #     message: ${{ env.SYMBOLS_COMMIT_MSG }}
+      - name: Install tools (Linux)
+        if: ${{ matrix.os == 'ubuntu-24.04' }}
+        run: |
+          sudo apt update && sudo apt install xorg-dev libpng-dev libsdl2-dev g++-mingw-w64 gcc-mingw-w64 libarchive-tools mkisofs
+
+      - name: Install Tools (Macos)
+        if: ${{ matrix.os == 'macos-15' }}
+        run: |
+          brew install libpng sdl2 mingw-w64 arm-none-eabi-gcc cdrtools
+
+      - name: Install SDL for win32
+        if: ${{ matrix.platform == 'sdl_win32' }}
+        run: |
+          make SDL2.dll
+
+      # TODO: Don't install latest SDK, use a stable version
+      - name: Install PS2DEV
+        if: ${{ matrix.platform == 'ps2' }}
+        run: |
+          PS2DEV="$HOME/ps2dev"
+          echo "PS2DEV=$HOME/ps2dev" >> "$GITHUB_ENV"
+          mkdir -p $PS2DEV
+          echo "PS2SDK=$PS2DEV/ps2sdk" >> "$GITHUB_ENV"
+          echo "GSKIT=$PS2DEV/gsKit" >> "$GITHUB_ENV"
+          echo "$PS2DEV/bin" >> "$GITHUB_PATH"
+          echo "$PS2DEV/ee/bin" >> "$GITHUB_PATH"
+          curl -o ps2dev-latest.tar.gz -LC - https://github.com/ps2dev/ps2dev/releases/download/latest/ps2dev-$(if [[ "$OSTYPE" == "darwin"* ]]; then echo macos; else echo ubuntu; fi)-latest.tar.gz
+          tar -xf ps2dev-latest.tar.gz --strip-components 1 -C $PS2DEV
+
+      - name: Install PSPDEV
+        if: ${{ matrix.platform == 'sdl_psp' }}
+        run: |
+          PSPDEV="$HOME/pspdev"
+          echo "PSPDEV=$HOME/pspdev" >> "$GITHUB_ENV"
+          mkdir -p $PSPDEV
+          echo "$PSPDEV/bin" >> "$GITHUB_PATH"
+          curl -o pspdev-latest.tar.gz -LC - https://github.com/pspdev/pspdev/releases/download/v20260301/pspdev-$(if [[ "$OSTYPE" == "darwin"* ]]; then echo "macos-latest-arm64"; else echo "ubuntu-latest-x86_64"; fi).tar.gz
+          tar -xf pspdev-latest.tar.gz --strip-components 1 -C $PSPDEV
+
+      - name: ${{ matrix.platform }}
+        run: |
+          make -j${nproc} ${{ matrix.platform }} GAME_NAME=${{ matrix.game }}
+
+  test:
+    strategy:
+      matrix:
+        platform: ["sdl"]
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork || github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork}}
+    runs-on: ubuntu-24.04
+    name: TAS Test ${{ matrix.platform }}
+    steps:
+      - name: Checkout PR
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target'}}
+        uses: actions/checkout@master
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Checkout
+        if: ${{ github.event_name == 'push' }}
+        uses: actions/checkout@master
+
+      - name: Install tools
+        run: |
+          sudo apt update && sudo apt install xorg-dev libsdl2-dev g++-mingw-w64 gcc-mingw-w64 libarchive-tools
+
+      - name: Install SDL for win32
+        if: ${{ matrix.platform == 'sdl_win32' }}
+        run: |
+          make SDL2.dll
+
+      - name: Build ${{ matrix.platform }}
+        run: |
+          make -j${nproc} ${{ matrix.platform }} TAS_TESTING=1
+
+      - name: Run TAS
+        timeout-minutes: 1
+        env:
+          HEADLESS: true
+        run: |
+          ./sa2.${{ matrix.platform }}
+
+  level_editor:
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork || github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork}}
+    runs-on: ubuntu-24.04
+    name: Level editor (BriBaSA)
+    steps:
+      - name: Checkout PR
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target'}}
+        uses: actions/checkout@master
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Checkout
+        if: ${{ github.event_name == 'push' }}
+        uses: actions/checkout@master
+
+      - name: Install deps
+        run: |
+          sudo apt update && sudo apt install xorg-dev libsdl2-dev
+
+      - name: Build
+        run: |
+          make -j${nproc} bribasa

@@ -1,0 +1,5 @@
+graphics/*.pal
+src/sa2
+sound/sa2/songs/midi
+sound/sa2/programmable_wave_samples
+sound/shared/programmable_wave_samples
