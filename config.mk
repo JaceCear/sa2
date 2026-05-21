@@ -43,7 +43,7 @@ else
   # Original
     PORTABLE              := 0
     NON_MATCHING          := 0
-    ENABLE_DECOMP_CREDITS := 0
+    ENABLE_DECOMP_CREDITS := 1
     COMPARE  ?= 1
     LDSCRIPT := $(LDSCRIPT).txt
 endif
