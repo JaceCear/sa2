@@ -486,6 +486,12 @@ void CreateGameStage(void)
 #endif
 }
 
+// NOTE: agbcc doesn't like #include-ing them below... it's hacky, anyway.
+#if (GAME == GAME_SA1)
+#include "game/sa1/ui/character_select.h"
+#else
+#include "game/sa2/ui/character_select.h"
+#endif
 void Task_GameStage(void)
 {
     u16 sioId = SIO_MULTI_CNT->id;
@@ -498,10 +504,8 @@ void Task_GameStage(void)
             const bool32 allUnlocked = TRUE;
             TasksDestroyAll();
 #if (GAME == GAME_SA1)
-#include "game/sa1/ui/character_select.h"
             CreateCharacterSelectionScreen(initialCharacter);
 #elif (GAME == GAME_SA2)
-#include "game/sa2/ui/character_select.h"
             CreateCharacterSelectionScreen(initialCharacter, allUnlocked);
 #endif
             return;

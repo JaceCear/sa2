@@ -57,7 +57,7 @@ void InputBuffer_HandleFrameInput(Player *p)
 
     InputBuffer_NewFrameInput(p->frameInput, p->frameInput);
 
-    if (p->unk70 != 0) {
+    if (p->mayAirDash != 0) {
         u16 unk4 = 0;
         unk0 = gUnknown_08C871D4[p->character];
         data = *unk0;
@@ -67,7 +67,7 @@ void InputBuffer_HandleFrameInput(Player *p)
             u32 r8 = *data++;
 
             // _0800E002
-            while (p->unk71 != r8) {
+            while (p->doAirDash != r8) {
                 u8 cid = sNewInputCountersIndex;
 
                 // _0800E012
@@ -122,7 +122,7 @@ void InputBuffer_HandleFrameInput(Player *p)
                 }
 
                 if (r6 == 0) {
-                    p->unk71 = r8;
+                    p->doAirDash = r8;
                     break;
                 }
 

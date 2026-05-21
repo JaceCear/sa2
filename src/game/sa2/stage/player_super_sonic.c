@@ -110,8 +110,8 @@ static void SuperSonicInitPlayer(void)
     p->transition = 0;
     p->unk6E = 0;
     p->prevTransition = 0;
-    p->unk70 = FALSE;
-    p->unk71 = 0;
+    p->mayAirDash = FALSE;
+    p->doAirDash = FALSE;
     p->SA2_LABEL(unk72) = 0;
     p->checkPointX = 0;
     p->checkPointY = 0;

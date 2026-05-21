@@ -1,0 +1,8 @@
+2026.05.21
+- All Chars: Tricks fire instantly
+- Sonic/Amy: Bounce faster, keeps forward momentum AND Boost Mode
+- Sonic : Consecutive bounces give you more height (up to three)
+- Sonic : Air Dash after bounce
+- Tails: Flying does not remove Boost Mode
+- Tails: Flight-Cancel with B-Button
+- Knuckles: Going into Glide keeps speed

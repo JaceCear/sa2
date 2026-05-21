@@ -1063,8 +1063,8 @@ void InitializePlayer(Player *p)
     p->isBoosting = FALSE;
     p->boostSpeed = 0;
     p->unk6C = FALSE;
-    p->unk71 = 0;
-    p->unk70 = FALSE;
+    p->doAirDash = FALSE;
+    p->mayAirDash = FALSE;
     p->disableTrickTimer = 0;
 
 #ifndef COLLECT_RINGS_ROM
@@ -1165,8 +1165,8 @@ void Player_TransitionCancelFlyingAndBoost(Player *p)
     p->SA2_LABEL(unk61) = 0;
     p->SA2_LABEL(unk62) = 0;
     p->SA2_LABEL(unk63) = 0;
-    p->unk71 = 0;
-    p->unk70 = FALSE;
+    p->doAirDash = FALSE;
+    p->mayAirDash = FALSE;
 
     if (p->character == CHARACTER_TAILS) {
         m4aSongNumStop(SE_TAILS_PROPELLER_FLYING);
@@ -1190,8 +1190,8 @@ static inline void Player_TransitionCancelBoost(Player *p)
     p->SA2_LABEL(unk61) = 0;
     p->SA2_LABEL(unk62) = 0;
     p->SA2_LABEL(unk63) = 0;
-    p->unk71 = 0;
-    p->unk70 = FALSE;
+    p->doAirDash = FALSE;
+    p->mayAirDash = FALSE;
 }
 #endif
 #endif
@@ -6615,8 +6615,8 @@ void Player_TouchGround(Player *p)
         p->SA2_LABEL(unk61) = 0;
         p->SA2_LABEL(unk62) = 0;
         p->SA2_LABEL(unk63) = 0;
-        p->unk71 = 0;
-        p->unk70 = FALSE;
+        p->doAirDash = FALSE;
+        p->mayAirDash = FALSE;
 
 #endif
 
@@ -6957,8 +6957,8 @@ void Player_InitJump(Player *p)
     p->SA2_LABEL(unk61) = r3;
     p->SA2_LABEL(unk62) = r3;
     p->SA2_LABEL(unk63) = r3;
-    p->unk71 = r3;
-    p->unk70 = r3;
+    p->doAirDash = r3;
+    p->mayDirDash = r3;
 
 #endif
 
@@ -6976,7 +6976,7 @@ void Player_InitJump(Player *p)
     }
 
 #ifndef COLLECT_RINGS_ROM
-    p->unk70 = TRUE;
+    p->mayAirDash = TRUE;
     jumpHeight = (p->moveState & MOVESTATE_IN_WATER) ? Q(PLAYER_JUMP_HEIGHT_UNDER_WATER) : Q(PLAYER_JUMP_HEIGHT);
 #else
     jumpHeight = Q(PLAYER_JUMP_HEIGHT);
@@ -7069,7 +7069,7 @@ void Player_8025F84(Player *p)
         p->charState = CHARSTATE_JUMP_2;
     }
 
-    p->unk70 = TRUE;
+    p->mayAirDash = TRUE;
 
     p->spriteInfoBody->s.frameFlags &= ~MOVESTATE_4000;
     m4aSongNumStart(SE_JUMP);
@@ -7095,7 +7095,7 @@ void Player_8026060(Player *p)
         }
     }
 
-    p->unk70 = TRUE;
+    p->mayAirDash = TRUE;
     p->unk6E = 1;
 
     p->spriteInfoBody->s.frameFlags &= ~MOVESTATE_4000;
@@ -7118,8 +7118,8 @@ void Player_InitUncurl(Player *p)
     p->SA2_LABEL(unk61) = 0;
     p->SA2_LABEL(unk62) = 0;
     p->SA2_LABEL(unk63) = 0;
-    p->unk71 = 0;
-    p->unk70 = FALSE;
+    p->doAirDash = FALSE;
+    p->mayAirDash = FALSE;
 #endif
     p->moveState |= (MOVESTATE_IN_AIR);
     p->moveState &= ~(MOVESTATE_1000000 | MOVESTATE_20);
@@ -7141,7 +7141,7 @@ void Player_InitUncurl(Player *p)
 #endif
     }
 
-    p->unk70 = TRUE;
+    p->mayAirDash = TRUE;
     p->unk6E = 0;
 
     p->spriteInfoBody->s.frameFlags &= ~MOVESTATE_4000;
@@ -7396,8 +7396,8 @@ void Player_InitGrinding(Player *p)
     p->SA2_LABEL(unk61) = 0;
     p->SA2_LABEL(unk62) = 0;
     p->SA2_LABEL(unk63) = 0;
-    p->unk71 = 0;
-    p->unk70 = FALSE;
+    p->doAirDash = FALSE;
+    p->mayAirDash = FALSE;
 #endif
 
     p->moveState &= ~MOVESTATE_SPIN_ATTACK;
@@ -8413,6 +8413,13 @@ void Player_InitDefaultTrick(Player *p)
 #if !DISABLE_TRICK_AIR_WAIT
     p->qSpeedAirX = 0;
     p->qSpeedAirY = 0;
+#else
+    // Instantly set the speed values when a trick is executed
+    p->qSpeedAirX = sTrickAccel[dir][character][0];
+    p->qSpeedAirY = sTrickAccel[dir][character][1];
+
+    if (p->moveState & MOVESTATE_FACING_LEFT)
+        p->qSpeedAirX = -p->qSpeedAirX;
 #endif
 
     p->charState = sTrickDirToCharstate[dir];
@@ -8431,11 +8438,14 @@ void Player_WindupDefaultTrick(Player *p)
         u16 character = p->character;
         p->variant++;
 
+#if !DISABLE_TRICK_AIR_WAIT
+        // Set in Player_InitDefaultTrick() so that it instantly fires.
         p->qSpeedAirX = sTrickAccel[dir][character][0];
         p->qSpeedAirY = sTrickAccel[dir][character][1];
 
         if (p->moveState & MOVESTATE_FACING_LEFT)
             p->qSpeedAirX = -p->qSpeedAirX;
+#endif
 
         PLAYERFN_SET(Player_DefaultTrick);
 

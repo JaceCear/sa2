@@ -133,6 +133,19 @@ typedef struct {
 #define PLAYER(index)    ((index != PLAYER_1) ? gPlayers[p->charFlags.partnerIndex] : gPlayers[gStageData.playerIndex])
 #endif
 
+// In SA2 tricks stop all characters when the buttons are pressed.
+// Set this to TRUE to behave more like SA3.
+#define DISABLE_TRICK_AIR_WAIT TRUE
+
+// Enable a moveset that is closer to the Adventure games
+#define ADVENTURE_MOVESET TRUE
+#if !ADVENTURE_MOVESET
+#define BOUNCE_SPEED Q(2.0)
+#else
+#define BOUNCE_COUNT_MAX 2 // gain max. extra height after 3 consecutive bounces
+#define BOUNCE_SPEED     Q(5.0)
+#endif
+
 // Declared beforehand because it's used inside Player struct
 struct Player_;
 typedef void (*PlayerCallback)(struct Player_ *);
@@ -155,7 +168,12 @@ typedef struct Player_ {
     /* 0x0E */ s8 spriteOffsetX;
     /* 0x0F */ s8 spriteOffsetY;
 #if (GAME != GAME_SA1)
+#if !ADVENTURE_MOVESET
     /* 0x18 */ u8 filler18[8];
+#else
+    /* 0x18 */ u8 filler18[7];
+    /* 0x1F */ u8 bounceCount;
+#endif // !ADVENTURE_MOVESET
 #endif
 
     // set/compare to values in "include/constants/move_states.h"
@@ -220,8 +238,8 @@ typedef struct Player_ {
     /* 0x6D */ u8 transition;
     /* 0x6E */ u8 unk6E; // Parameter for transition(?)
     /* 0x6F */ u8 prevTransition;
-    /* 0x70 */ bool8 unk70;
-    /* 0x71 */ u8 unk71;
+    /* 0x70 */ bool8 mayAirDash;
+    /* 0x71 */ bool8 doAirDash;
 #endif
     // unk72 appears to be a duration timer for side-forward trick animations + Homing Attack
     /* 0x46 */ s16 SA2_LABEL(unk72);
@@ -230,21 +248,21 @@ typedef struct Player_ {
     /* 0x4C */ u32 checkpointTime;
 
     // TODO: Could these be a matrix?
-    /* 0x50 */ u16 SA2_LABEL(unk7C);
-    /* 0x52 */ u16 SA2_LABEL(unk7E);
-    /* 0x54 */ s16 SA2_LABEL(unk80);
-    /* 0x56 */ s16 SA2_LABEL(unk82);
+    /* 0x50|0x7C */ u16 SA2_LABEL(unk7C);
+    /* 0x52|0x7E */ u16 SA2_LABEL(unk7E);
+    /* 0x54|0x80 */ s16 SA2_LABEL(unk80);
+    /* 0x56|0x82 */ s16 SA2_LABEL(unk82);
 
     // Denotes how many points the player should get after defeating an enemy.
     // (see stage/enemy_defeat_score.c and stage/entity_manager.c for usage)
-    /* 0x58 */ s8 defeatScoreIndex;
+    /* 0x58|0x84 */ s8 defeatScoreIndex;
 
-    /* 0x59 */ s8 character;
-    /* 0x5A */ s8 secondsUntilDrown;
-    /* 0x5B */ s8 framesUntilDrownCountDecrement;
-    /* 0x5C */ s8 framesUntilWaterSurfaceEffect;
+    /* 0x59|0x85 */ s8 character;
+    /* 0x5A|0x86 */ s8 secondsUntilDrown;
+    /* 0x5B|0x87 */ s8 framesUntilDrownCountDecrement;
+    /* 0x5C|0x88 */ s8 framesUntilWaterSurfaceEffect;
 
-    /* 0x60 */ Task *spriteTask;
+    /* 0x60|0x8C */ Task *spriteTask;
     /* 0x64 */ PlayerSpriteInfo *spriteInfoBody; // for character sprites
     /* 0x68 */ PlayerSpriteInfo *spriteInfoLimbs; // SpriteInfo for Tails' tails / Cream's ears, when rolling
 
@@ -301,10 +319,6 @@ extern Player gPlayer;
 // "Cheat Code" Tails
 extern Player gPartner;
 #endif
-
-// In SA2 tricks stop all characters when the buttons are pressed.
-// Set this to TRUE to behave more like SA3.
-#define DISABLE_TRICK_AIR_WAIT !TRUE
 
 // Actual type of 'type8029A28' currently unknown, rename once it is
 typedef s32 type8029A28;

@@ -283,7 +283,10 @@ void Player_SonicAmy_InitStopNSlam(Player *p)
 
     p->spriteInfoBody->s.frameFlags &= ~SPRITE_FLAG_MASK_ANIM_OVER;
 
+    // Don't remove Boost Mode for the Bounce
+#if !ADVENTURE_MOVESET
     p->isBoosting = FALSE;
+#endif
     p->charState = CHARSTATE_TRICK_DOWN;
 
     if (p->character == CHARACTER_AMY) {
@@ -293,6 +296,23 @@ void Player_SonicAmy_InitStopNSlam(Player *p)
 #if !DISABLE_TRICK_AIR_WAIT
     p->qSpeedAirX = 0;
     p->qSpeedAirY = 0;
+#endif
+
+#if ADVENTURE_MOVESET
+    if (p->qSpeedAirY < 0 || p->qSpeedAirY < BOUNCE_SPEED) {
+        p->qSpeedAirY = BOUNCE_SPEED;
+    }
+
+    p->spriteInfoBody->s.animSpeed = SPRITE_ANIM_SPEED(2.0);
+    if (p->spriteInfoLimbs) {
+        p->spriteInfoLimbs->s.animSpeed = SPRITE_ANIM_SPEED(2.0);
+    }
+
+    if (p->character == CHARACTER_SONIC) {
+        CreateSonicBoundEffect(I(p->qWorldX), I(p->qWorldY));
+    } else if (p->character == CHARACTER_AMY) {
+        CreateAmyAttackHeartEffect(AMY_HEART_PATTERN_STOP_N_SLAM);
+    }
 #endif
 
     PLAYERFN_SET_AND_CALL(Player_SonicAmy_WindupStopNSlam, p);
@@ -319,13 +339,26 @@ void Player_SonicAmy_StopNSlam(Player *p)
         rotPtr--;
 #endif
 
+#if ADVENTURE_MOVESET
+        p->bounceCount = MIN(p->bounceCount, BOUNCE_COUNT_MAX);
+        bounceImpactAccel -= Q(p->bounceCount);
+        p->bounceCount++;
+#endif
+
         // Bounce up after hitting the ground
         sinValue = SIN_24_8(rot = p->rotation * 4);
+#if !ADVENTURE_MOVESET
         p->qSpeedAirX = -I(bounceImpactAccel * sinValue);
+#endif
         bounceSpeed = I(bounceImpactAccel * (COS_24_8((rot))));
         p->qSpeedAirY = -ABS(bounceSpeed);
 
+#if !ADVENTURE_MOVESET
         p->qSpeedAirX = HALVE(p->qSpeedAirX);
+#else
+        p->mayAirDash = TRUE;
+        p->doAirDash = FALSE;
+#endif
 
         PLAYERFN_SET(Player_SonicAmy_StopNSlam_AfterGroundCollision);
 
@@ -387,8 +420,8 @@ void Player_SonicForwardThrust(Player *p)
 
     p->qSpeedAirY = 0;
     p->rotation = 0;
-    p->unk70 = FALSE;
-    p->unk71 = 0;
+    p->mayAirDash = FALSE;
+    p->doAirDash = FALSE;
 
     m4aSongNumStart(SE_SONIC_MIDAIR_SOMERSAULT);
 
@@ -419,8 +452,8 @@ void Player_Sonic_InitHomingAttack(Player *p)
     p->qSpeedAirY = I(sinVal * six) - Q(0.5);
 
     p->rotation = 0;
-    p->unk70 = FALSE;
-    p->unk71 = 0;
+    p->mayAirDash = FALSE;
+    p->doAirDash = FALSE;
     p->unk6E = 0;
     p->spriteInfoBody->s.frameFlags &= ~SPRITE_FLAG_MASK_ANIM_OVER;
     p->rotation = 0;
@@ -445,8 +478,8 @@ void Player_InitHomingAttackRecoil(Player *p)
     p->qSpeedAirY = -Q(4.0);
     p->rotation = 0;
 
-    p->unk70 = TRUE;
-    p->unk71 = 0;
+    p->mayAirDash = TRUE;
+    p->doAirDash = FALSE;
     p->unk6E = 0;
     p->spriteInfoBody->s.frameFlags &= ~SPRITE_FLAG_MASK_ANIM_OVER;
     p->rotation = 0;
@@ -514,17 +547,36 @@ void Player_SonicAmy_WindupStopNSlam(Player *p)
 {
     SA2_LABEL(sub_80283C4)(p);
 
-    if (p->spriteInfoBody->s.frameFlags & SPRITE_FLAG_MASK_ANIM_OVER) {
+#if ADVENTURE_MOVESET
+    p->qSpeedAirY += TRICK__STOP_N_SLAM__DROP_SPEED;
+#endif
+
+    // Either windup anim stopped or the player hit something.
+    if ((p->spriteInfoBody->s.frameFlags & SPRITE_FLAG_MASK_ANIM_OVER)
+#if ADVENTURE_MOVESET
+        || ((p->moveState & (MOVESTATE_4000 | MOVESTATE_IN_AIR)) != MOVESTATE_IN_AIR)
+#endif
+    ) {
         p->variant++;
 
-        p->qSpeedAirY = Q(2.0);
+        // qSpeedAirY was set in the init stage,
+        // so if we did reset this here,
+        // we would get slower after the 22 frames the windup takes.
+#if !ADVENTURE_MOVESET
+        p->qSpeedAirY = BOUNCE_SPEED;
+
         PLAYERFN_SET(Player_SonicAmy_StopNSlam);
 
+        // Set in Init function
         if (p->character == CHARACTER_SONIC) {
             CreateSonicBoundEffect(I(p->qWorldX), I(p->qWorldY));
         } else if (p->character == CHARACTER_AMY) {
             CreateAmyAttackHeartEffect(AMY_HEART_PATTERN_STOP_N_SLAM);
         }
+#else
+        p->qSpeedAirY = BOUNCE_SPEED;
+        PLAYERFN_SET(Player_SonicAmy_StopNSlam);
+#endif
     }
 }
 
@@ -532,11 +584,24 @@ void Player_SonicAmy_StopNSlam_AfterGroundCollision(Player *p)
 {
     p->qSpeedAirY += TRICK__STOP_N_SLAM__DROP_SPEED;
 
+#if ADVENTURE_MOVESET
+    if (Player_Sonic_TryForwardThrust(p)) {
+        return;
+    }
+#endif
+
     if (p->qSpeedAirY >= 0) {
         p->variant++;
         p->unk6C = TRUE;
         PLAYERFN_SET(Player_SonicAmy_StopNSlam_FallAfterCollision);
     }
+
+#if ADVENTURE_MOVESET
+    if (p->character == CHARACTER_SONIC && (p->frameInput & gPlayerControls.attack)) {
+        Player_SonicAmy_InitStopNSlam(p);
+        return;
+    }
+#endif
 
     SA2_LABEL(sub_80283C4)(p);
 }
@@ -547,6 +612,20 @@ void Player_SonicAmy_StopNSlam_FallAfterCollision(Player *p)
 
     if (!(p->moveState & MOVESTATE_IN_AIR)) {
         p->transition = PLTRANS_TOUCH_GROUND;
+#if ADVENTURE_MOVESET
+        p->bounceCount = 0;
+#endif
+    } else {
+#if ADVENTURE_MOVESET
+        if (Player_Sonic_TryForwardThrust(p)) {
+            return;
+        }
+
+        if (p->character == CHARACTER_SONIC && (p->frameInput & gPlayerControls.attack)) {
+            Player_SonicAmy_InitStopNSlam(p);
+            return;
+        }
+#endif
     }
 }
 
@@ -575,7 +654,7 @@ void Player_Sonic_HomingAttack(Player *p)
 bool32 Player_Sonic_TryForwardThrust(Player *p)
 {
     if (p->character == CHARACTER_SONIC) {
-        if (p->unk71 == 1) {
+        if (p->doAirDash == TRUE) {
             Player_SonicForwardThrust(p);
             return TRUE;
         }
@@ -902,7 +981,9 @@ void Player_Tails_InitFlying(Player *p)
 
     p->w.tf.flyingDuration = TAILS_FLYING_DURATION;
     p->SA2_LABEL(unk61) = 1;
+#if !ADVENTURE_MOVESET
     p->isBoosting = FALSE;
+#endif
     p->boostSpeed = 0;
 
     gPlayer.moveState |= MOVESTATE_10000000;
@@ -954,6 +1035,17 @@ void Player_Tails_8012C2C(Player *p)
     } else if (p->moveState & MOVESTATE_IN_WATER) {
         p->charState = CHARSTATE_FALLING_VULNERABLE_B;
         p->transition = PLTRANS_UNCURL;
+    } else {
+#if ADVENTURE_MOVESET
+        // Flight-Cancel
+        if (p->heldInput & gPlayerControls.attack) {
+            p->charState = CHARSTATE_FALLING_VULNERABLE_B;
+            p->transition = PLTRANS_UNCURL;
+
+            m4aSongNumStop(SE_TAILS_PROPELLER_FLYING);
+            return;
+        }
+#endif
     }
 }
 
@@ -1789,7 +1881,11 @@ void Player_Knuckles_InitGlide(Player *p)
     if (p->qSpeedAirY < 0)
         p->qSpeedAirY = 0;
 
+#if !ADVENTURE_MOVESET
     p->qSpeedGround = Q(3.0);
+#else
+    p->qSpeedGround = MAX(p->qSpeedGround, Q(3.0));
+#endif
 
     if (p->moveState & MOVESTATE_IN_WATER)
         p->qSpeedGround /= 2;
